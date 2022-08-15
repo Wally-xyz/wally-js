@@ -4,6 +4,7 @@
     "esModuleInterop": true,
     "inlineSources": true,
     "lib": ["ES2020", "DOM"],
+    "jsx": "react",
     "module": "CommonJS",
     "moduleResolution": "Node",
     "outDir": "dist",
@@ -12,5 +13,5 @@
     "strict": true,
     "target": "ES2017"
   },
-  "include": ["./src/**/*.ts"]
+  "include": ["./src/**/*.ts", "./src/**/*.tsx"]
 }
