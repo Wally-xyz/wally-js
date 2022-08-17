@@ -8,3 +8,12 @@ export declare type Wallet = {
 export declare type VeriftOTPResult = {
     token?: string;
 };
+export declare type RequestObject = {
+    method: string;
+    headers: {
+        Authorization?: string;
+        Accept: string;
+        "Content-Type": string;
+    };
+    body?: string;
+};

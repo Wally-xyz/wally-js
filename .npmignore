@@ -1,0 +1,10 @@
+demo
+node_modules
+src
+.eslintcache
+.eslintrc.js
+.gitignore
+.npmignore
+package-lock.json
+tsconfig.json
+yarn-error.log
