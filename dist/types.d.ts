@@ -5,3 +5,6 @@ export declare type Wallet = {
     tags: string[];
     referenceId: string;
 };
+export declare type VeriftOTPResult = {
+    token?: string;
+};

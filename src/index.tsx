@@ -1,37 +1,48 @@
 import React from "react";
 import ReactDOM, { Root } from "react-dom/client";
 
-import { LoginComponent } from "./widgets/Login";
-
-import { APP_ROOT } from "./constants";
-import { Wallet } from "./types";
+import { LoginComponent } from "./components/Login";
+import { request } from "./components/request";
+import { VeriftOTPResult, Wallet } from "./types";
 
 export class WallyConnector {
+  appId: string | undefined = undefined;
   authToken: string | undefined = undefined;
+
   root: Root | undefined;
 
-  constructor(authToken: string) {
-    if (authToken) {
-      this.authToken = authToken;
-    }
+  constructor({ appId, authToken }: { appId: string; authToken: string }) {
+    this.appId = appId;
+    this.authToken = authToken;
   }
 
   setAuthToken = (authToken: string): void => {
     this.authToken = authToken;
-    this.root?.unmount();
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async requestGet(url: string): Promise<any> {
-    if (!this.authToken) {
-      console.error("--- UNAUTHORISED ---");
+    return request(this.authToken, "GET", url, undefined);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async requestPost(url: string, data?: Record<string, unknown>): Promise<any> {
+    return request(this.authToken, "GET", url, data);
+  }
+
+  async getOTP(email: string): Promise<Wallet[]> {
+    return this.requestPost("users/login", { email });
+  }
+
+  async verifyOTP(email: string, otp: string): Promise<VeriftOTPResult> {
+    const result = this.requestPost("users/verifyOTP", {
+      email,
+      otp,
+    }) as VeriftOTPResult;
+    if (result.token) {
+      this.authToken = result.token;
     }
-    const response = await fetch(`${APP_ROOT}${url}`, {
-      headers: {
-        Authorization: `Bearer ${this.authToken}`,
-      },
-    });
-    return response.json();
+    return result;
   }
 
   async getWallets(): Promise<Wallet[]> {
@@ -44,6 +55,13 @@ export class WallyConnector {
     document.body.appendChild(anchor);
 
     this.root = ReactDOM.createRoot(anchor);
-    this.root.render(<LoginComponent setAuthToken={this.setAuthToken} />);
+    this.root.render(
+      <LoginComponent
+        setAuthToken={(tkn: string) => {
+          this.setAuthToken(tkn);
+          this.root?.unmount();
+        }}
+      />
+    );
   }
 }

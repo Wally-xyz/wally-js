@@ -1,1 +1,1 @@
-{"version":3,"file":"types.js","sourceRoot":"","sources":["../src/types.ts"],"names":[],"mappings":"","sourcesContent":["export type Wallet = {\n  id: string;\n  email: string;\n  address: string;\n  tags: string[];\n  referenceId: string;\n};\n"]}
+{"version":3,"file":"types.js","sourceRoot":"","sources":["../src/types.ts"],"names":[],"mappings":"","sourcesContent":["export type Wallet = {\n  id: string;\n  email: string;\n  address: string;\n  tags: string[];\n  referenceId: string;\n};\n\nexport type VeriftOTPResult = { token?: string };\n"]}
