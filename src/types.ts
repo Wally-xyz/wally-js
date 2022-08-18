@@ -17,3 +17,8 @@ export type RequestObject = {
   };
   body?: string;
 };
+
+export type SignedMessage = {
+  address: string;
+  signature: string;
+};

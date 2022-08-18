@@ -1,5 +1,5 @@
 import { request } from "./request";
-import { VeriftOTPResult, Wallet } from "./types";
+import { SignedMessage, VeriftOTPResult, Wallet } from "./types";
 
 export class WallyConnector {
   appId: string | undefined = undefined;
@@ -51,7 +51,7 @@ export class WallyConnector {
     return result;
   }
 
-  async signMessage(message: string): Promise<Wallet[]> {
+  async signMessage(message: string): Promise<SignedMessage> {
     return this.requestPost(
       "users/sign-message",
       { message, appId: this.appId },
