@@ -1,9 +1,7 @@
-import { Root } from "react-dom/client";
 import { VeriftOTPResult, Wallet } from "./types";
 export declare class WallyConnector {
     appId: string | undefined;
     authToken: string | undefined;
-    root: Root | undefined;
     constructor({ appId, authToken, }?: {
         appId?: string;
         authToken?: string;
@@ -13,6 +11,6 @@ export declare class WallyConnector {
     requestPost(url: string, data?: Record<string, unknown>, isAuthenticated?: boolean): Promise<any>;
     getOTP(email: string): Promise<Wallet[]>;
     verifyOTP(email: string, OTP: string): Promise<VeriftOTPResult>;
+    signMessage(message: string): Promise<Wallet[]>;
     getWallets(): Promise<Wallet[]>;
-    authorise(): void;
 }

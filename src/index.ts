@@ -1,15 +1,9 @@
-import React from "react";
-import ReactDOM, { Root } from "react-dom/client";
-
-import { LoginComponent } from "./components/Login";
 import { request } from "./request";
 import { VeriftOTPResult, Wallet } from "./types";
 
 export class WallyConnector {
   appId: string | undefined = undefined;
   authToken: string | undefined = undefined;
-
-  root: Root | undefined;
 
   constructor({
     appId,
@@ -57,23 +51,15 @@ export class WallyConnector {
     return result;
   }
 
-  async getWallets(): Promise<Wallet[]> {
-    return this.requestGet("wallets");
+  async signMessage(message: string): Promise<Wallet[]> {
+    return this.requestPost(
+      "users/sign-message",
+      { message, appId: this.appId },
+      false
+    );
   }
 
-  authorise(): void {
-    this.authToken = undefined;
-    const anchor = document.createElement("div");
-    document.body.appendChild(anchor);
-
-    this.root = ReactDOM.createRoot(anchor);
-    this.root.render(
-      <LoginComponent
-        setAuthToken={(tkn: string) => {
-          this.setAuthToken(tkn);
-          this.root?.unmount();
-        }}
-      />
-    );
+  async getWallets(): Promise<Wallet[]> {
+    return this.requestGet("users/wallets");
   }
 }
