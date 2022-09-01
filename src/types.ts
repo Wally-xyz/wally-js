@@ -1,11 +1,3 @@
-export type Wallet = {
-  id: string;
-  email: string;
-  address: string;
-  tags: string[];
-  referenceId: string;
-};
-
 export type VeriftOTPResult = { token?: string };
 
 export type RequestObject = {
@@ -16,9 +8,4 @@ export type RequestObject = {
     "Content-Type": string;
   };
   body?: string;
-};
-
-export type SignedMessage = {
-  address: string;
-  signature: string;
 };
