@@ -25,19 +25,4 @@ export class WallyConnector {
   public async getOTP(email: string): Promise<void> {
     return this.requestPost("users/login", { email }, false);
   }
-
-  public async verifyOTP(email: string, OTP: string): Promise<VeriftOTPResult> {
-    const result = this.requestPost(
-      "users/verifyOTP",
-      {
-        email,
-        OTP,
-      },
-      false
-    ) as VeriftOTPResult;
-    if (result.token) {
-      this.setAuthToken(result.token);
-    }
-    return result;
-  }
 }

@@ -19,10 +19,4 @@ describe("wally-connector", () => {
     wallyConnector.getOTP("test@test.com");
     expect(global.fetch).toBeCalledTimes(1);
   });
-
-  test("verifyOTP", () => {
-    const wallyConnector = new WallyConnector();
-    wallyConnector.verifyOTP("test@test.com", "1234");
-    expect(global.fetch).toBeCalledTimes(1);
-  });
 });
