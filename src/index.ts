@@ -1,5 +1,4 @@
 import { request } from "./request";
-import { VeriftOTPResult } from "./types";
 
 export class WallyConnector {
   private authToken: string | undefined = undefined;

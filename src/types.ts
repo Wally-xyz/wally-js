@@ -1,5 +1,3 @@
-export type VeriftOTPResult = { token?: string };
-
 export type RequestObject = {
   method: string;
   headers: {
