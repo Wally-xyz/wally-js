@@ -4,7 +4,7 @@ describe("wally-connector", () => {
   beforeEach(() => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
-        json: () => Promise.resolve({}),
+        json: () => Promise.resolve({ ok: true }),
         // eslint-disable-next-line
       } as any)
     );

@@ -2,6 +2,11 @@ import { request } from "./request";
 
 export class WallyConnector {
   private authToken: string | undefined = undefined;
+  private clientId: string | undefined = undefined;
+
+  constructor(clientId: string) {
+    this.clientId = clientId;
+  }
 
   private setAuthToken = (authToken: string): void => {
     this.authToken = authToken;
