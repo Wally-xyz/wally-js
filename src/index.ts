@@ -1,4 +1,5 @@
 import { request } from "./request";
+import { CreateWalletRequest, CreateWalletResponse } from "./types";
 
 export class WallyConnector {
   private authToken: string | undefined = undefined;
@@ -28,5 +29,17 @@ export class WallyConnector {
 
   public async getOTP(email: string): Promise<void> {
     return this.requestPost("users/login", { email }, false);
+  }
+
+  public async createWallet({
+    email,
+    reference,
+    tags,
+  }: CreateWalletRequest): Promise<CreateWalletResponse> {
+    return this.requestPost(
+      "users/create-wallet",
+      { email, id: reference, tags },
+      false
+    );
   }
 }
