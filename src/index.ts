@@ -24,7 +24,13 @@ export class WallyConnector {
     isAuthenticated?: boolean
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): Promise<any> {
-    return request(this.authToken, "POST", url, data, isAuthenticated);
+    return request(
+      this.authToken,
+      "POST",
+      url,
+      { ...data, clientId: this.clientId },
+      isAuthenticated
+    );
   }
 
   public async getOTP(email: string): Promise<void> {
