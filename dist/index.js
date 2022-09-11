@@ -1,46 +1,63 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WallyConnector = void 0;
-const request_1 = require("./request");
-class WallyConnector {
-    constructor({ appId, authToken, } = {}) {
-        this.appId = undefined;
-        this.authToken = undefined;
-        this.setAuthToken = (authToken) => {
-            this.authToken = authToken;
-        };
-        // TODO: is appId required field
-        this.appId = appId;
-        this.authToken = authToken;
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+export class WallyConnector {
+    constructor(clientId, opts) {
+        this.clientId = clientId;
+        this.opts = opts;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async requestGet(url, isAuthenticated) {
-        return (0, request_1.request)(this.authToken, "GET", url, undefined, isAuthenticated);
+    loginWithEmail() {
+        var _a;
+        const queryParams = new URLSearchParams({ clientId: this.clientId, state: this.generateStateCode() });
+        window.location.replace(((_a = this.opts) === null || _a === void 0 ? void 0 : _a.test)
+            ? `https://api.wally.xyz/oauth/otp?${queryParams.toString()}`
+            : `http://localhost:3000/oauth/otp?${queryParams.toString()}`);
     }
-    async requestPost(url, data, isAuthenticated
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ) {
-        return (0, request_1.request)(this.authToken, "POST", url, data, isAuthenticated);
+    setAuthToken(authToken) {
+        localStorage.setItem(`wally:${this.clientId}`, authToken);
     }
-    async getOTP(email) {
-        return this.requestPost("users/login", { email }, false);
+    ;
+    getAuthToken() {
+        return localStorage.getItem(`wally:${this.clientId}`);
     }
-    async verifyOTP(email, OTP) {
-        const result = this.requestPost("users/verifyOTP", {
-            email,
-            OTP,
-        }, false);
-        if (result.token) {
-            this.authToken = result.token;
+    generateStateCode(length = 10) {
+        const chars = [];
+        for (let i = 0; i < 26; i++) {
+            chars.push(String.fromCharCode('a'.charCodeAt(0) + i));
+            chars.push(String.fromCharCode('A'.charCodeAt(0) + i));
         }
-        return result;
+        for (let i = 0; i < 10; i++) {
+            chars.push('0'.charCodeAt(0) + i);
+        }
+        const authCode = [];
+        for (let charCount = 0; charCount < length; charCount++) {
+            const randInt = Math.floor(Math.random() * chars.length);
+            authCode.push(chars[randInt]);
+        }
+        return authCode.join('');
     }
-    async signMessage(message) {
-        return this.requestPost("users/sign-message", { message, appId: this.appId }, false);
-    }
-    async getWallets() {
-        return this.requestGet("users/wallets");
+    signMessage(message) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const queryString = new URLSearchParams({ message }).toString();
+            const resp = yield fetch(`/app/user/sign-message?${queryString}`, {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${this.getAuthToken()}`,
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+            });
+            if (!resp.ok || resp.status >= 300) {
+                throw new Error('Server returned a non-successful response');
+            }
+            return yield resp.json();
+        });
     }
 }
-exports.WallyConnector = WallyConnector;
 //# sourceMappingURL=index.js.map

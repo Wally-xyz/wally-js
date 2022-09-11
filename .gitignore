@@ -37,3 +37,5 @@ node_modules
 # typescript
 /demo/*.tsbuildinfo
 /demo/next-env.d.ts
+
+test_page/public/sdk

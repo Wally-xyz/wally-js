@@ -1,16 +1,15 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "esModuleInterop": true,
     "inlineSources": true,
-    "lib": ["ES2020", "DOM"],
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "lib": ["ES6", "DOM"],
+    "module": "commonjs",
+    "esModuleInterop": true,
     "outDir": "dist",
     "rootDir": "src",
     "sourceMap": true,
     "strict": true,
-    "target": "ES2017"
+    "target": "ES6"
   },
   "include": ["./src/**/*.ts"]
 }
