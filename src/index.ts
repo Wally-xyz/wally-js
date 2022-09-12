@@ -1,15 +1,19 @@
 import { SignedMessage, WallyConnectorOptions } from './types';
 
 export class WallyConnector {
-  constructor(private readonly clientId: string, private readonly opts?: WallyConnectorOptions) {}
+  private host: string;
+
+  constructor(private readonly clientId: string, private readonly opts?: WallyConnectorOptions) {
+    this.host = (this.opts?.test) ? 'http://localhost:3000' : 'https://api.wally.xyz';
+  }
 
   public loginWithEmail() {
     const state = this.generateStateCode();
     this.saveState(state);
     const queryParams = new URLSearchParams({ clientId: this.clientId, state });
     window.location.replace((this.opts?.test)
-      ? `https://api.wally.xyz/oauth/otp?${queryParams.toString()}`
-      : `http://localhost:3000/oauth/otp?${queryParams.toString()}`
+      ? `${this.host}/oauth/otp?${queryParams.toString()}`
+      : `${this.host}/oauth/otp?${queryParams.toString()}`
     );
   }
 
@@ -21,17 +25,36 @@ export class WallyConnector {
     const storedState = this.getState();
     const queryParams = new URLSearchParams(window.location.search);
     if (storedState && storedState !== queryParams.get('state')) {
-      throw new Error('Invalid state');
+      this.deleteState();
+      if (this.opts?.test) {
+        console.error('Invalid state');
+      }
     }
     this.deleteState();
     const authCode = queryParams.get('authorization_code');
 
-    // TODO: exchange auth code for token
+    const resp = await fetch(`${this.host}/oauth/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        authCode,
+      }),
+    });
+
+    if (!resp.ok || resp.status >= 300) {
+      throw new Error('Server returned a non-successful response when exchanging authorization code for token');
+    }
+
+    const data = await resp.json();
+    this.setAuthToken(data.token);
   }
 
   private setAuthToken(authToken: string): void {
     localStorage.setItem(`wally:${this.clientId}:token`, authToken);
-  };
+  }
 
   private getAuthToken(): string | null {
     return localStorage.getItem(`wally:${this.clientId}:token`);
@@ -69,7 +92,7 @@ export class WallyConnector {
 
   async signMessage(message: string): Promise<SignedMessage> {
     const queryString = new URLSearchParams({ message }).toString();
-    const resp = await fetch(`/app/user/sign-message?${queryString}`, {
+    const resp = await fetch(`${this.host}/app/user/sign-message?${queryString}`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${this.getAuthToken()}`,
@@ -79,7 +102,7 @@ export class WallyConnector {
     });
 
     if (!resp.ok || resp.status >= 300) {
-      throw new Error('Server returned a non-successful response');
+      throw new Error('Server returned a non-successful response when signing a message');
     }
     return await resp.json() as Promise<SignedMessage>;
   }

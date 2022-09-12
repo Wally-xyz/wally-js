@@ -1,5 +1,5 @@
 window.onload = function() {
-  const wally = new WallyConnector('b174c436-9dc3-452d-b511-cb6c13de63b8');
+  const wally = new WallyConnector('b174c436-9dc3-452d-b511-cb6c13de63b8', { test: true });
   const loginBtn = document.querySelector('input[type="button"]');
   loginBtn.onclick = () => {
     wally.loginWithEmail();

@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -7,24 +8,62 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-export class WallyConnector {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WallyConnector = void 0;
+class WallyConnector {
     constructor(clientId, opts) {
+        var _a;
         this.clientId = clientId;
         this.opts = opts;
+        this.host = ((_a = this.opts) === null || _a === void 0 ? void 0 : _a.test) ? 'http://localhost:3000' : 'https://api.wally.xyz';
     }
     loginWithEmail() {
         var _a;
-        const queryParams = new URLSearchParams({ clientId: this.clientId, state: this.generateStateCode() });
+        const state = this.generateStateCode();
+        this.saveState(state);
+        const queryParams = new URLSearchParams({ clientId: this.clientId, state });
         window.location.replace(((_a = this.opts) === null || _a === void 0 ? void 0 : _a.test)
-            ? `https://api.wally.xyz/oauth/otp?${queryParams.toString()}`
-            : `http://localhost:3000/oauth/otp?${queryParams.toString()}`);
+            ? `${this.host}/oauth/otp?${queryParams.toString()}`
+            : `${this.host}/oauth/otp?${queryParams.toString()}`);
+    }
+    isRedirected() {
+        return this.getState() !== null;
+    }
+    handleRedirect() {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            const storedState = this.getState();
+            const queryParams = new URLSearchParams(window.location.search);
+            if (storedState && storedState !== queryParams.get('state')) {
+                this.deleteState();
+                if ((_a = this.opts) === null || _a === void 0 ? void 0 : _a.test) {
+                    console.error('Invalid state');
+                }
+            }
+            this.deleteState();
+            const authCode = queryParams.get('authorization_code');
+            const resp = yield fetch(`${this.host}/oauth/token`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify({
+                    authCode,
+                }),
+            });
+            if (!resp.ok || resp.status >= 300) {
+                throw new Error('Server returned a non-successful response when exchanging authorization code for token');
+            }
+            const data = yield resp.json();
+            this.setAuthToken(data.token);
+        });
     }
     setAuthToken(authToken) {
-        localStorage.setItem(`wally:${this.clientId}`, authToken);
+        localStorage.setItem(`wally:${this.clientId}:token`, authToken);
     }
-    ;
     getAuthToken() {
-        return localStorage.getItem(`wally:${this.clientId}`);
+        return localStorage.getItem(`wally:${this.clientId}:token`);
     }
     generateStateCode(length = 10) {
         const chars = [];
@@ -42,10 +81,19 @@ export class WallyConnector {
         }
         return authCode.join('');
     }
+    saveState(state) {
+        localStorage.setItem(`wally:${this.clientId}:state:token`, state);
+    }
+    getState() {
+        return localStorage.getItem(`wally:${this.clientId}:state:token`);
+    }
+    deleteState() {
+        localStorage.removeItem(`wally:${this.clientId}:state:token`);
+    }
     signMessage(message) {
         return __awaiter(this, void 0, void 0, function* () {
             const queryString = new URLSearchParams({ message }).toString();
-            const resp = yield fetch(`/app/user/sign-message?${queryString}`, {
+            const resp = yield fetch(`${this.host}/app/user/sign-message?${queryString}`, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${this.getAuthToken()}`,
@@ -54,10 +102,11 @@ export class WallyConnector {
                 },
             });
             if (!resp.ok || resp.status >= 300) {
-                throw new Error('Server returned a non-successful response');
+                throw new Error('Server returned a non-successful response when signing a message');
             }
             return yield resp.json();
         });
     }
 }
+exports.WallyConnector = WallyConnector;
 //# sourceMappingURL=index.js.map
