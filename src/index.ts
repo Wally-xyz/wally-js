@@ -43,7 +43,7 @@ export class WallyConnector {
     tags,
   }: CreateWalletRequest): Promise<CreateWalletResponse> {
     return this.requestPost(
-      "users/create-wallet",
+      "users/wallets",
       { email, id: reference, tags },
       false
     );
