@@ -4,5 +4,5 @@ export type SignedMessage = {
 };
 
 export type WallyConnectorOptions = {
-  test?: boolean;
+  isDevelopment?: boolean;
 };

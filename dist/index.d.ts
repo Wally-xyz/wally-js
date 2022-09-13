@@ -1,9 +1,9 @@
 import { SignedMessage, WallyConnectorOptions } from './types';
 export declare class WallyConnector {
     private readonly clientId;
-    private readonly opts?;
+    private readonly options?;
     private host;
-    constructor(clientId: string, opts?: WallyConnectorOptions | undefined);
+    constructor(clientId: string, options?: WallyConnectorOptions | undefined);
     loginWithEmail(): void;
     isRedirected(): boolean;
     handleRedirect(): Promise<void>;

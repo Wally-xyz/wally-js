@@ -11,18 +11,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WallyConnector = void 0;
 class WallyConnector {
-    constructor(clientId, opts) {
+    constructor(clientId, options) {
         var _a;
         this.clientId = clientId;
-        this.opts = opts;
-        this.host = ((_a = this.opts) === null || _a === void 0 ? void 0 : _a.test) ? 'http://localhost:3000' : 'https://api.wally.xyz';
+        this.options = options;
+        this.host = ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment) ? 'http://localhost:3000' : 'https://api.wally.xyz';
     }
     loginWithEmail() {
         var _a;
         const state = this.generateStateCode();
         this.saveState(state);
         const queryParams = new URLSearchParams({ clientId: this.clientId, state });
-        window.location.replace(((_a = this.opts) === null || _a === void 0 ? void 0 : _a.test)
+        window.location.replace(((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment)
             ? `${this.host}/oauth/otp?${queryParams.toString()}`
             : `${this.host}/oauth/otp?${queryParams.toString()}`);
     }
@@ -36,7 +36,7 @@ class WallyConnector {
             const queryParams = new URLSearchParams(window.location.search);
             if (storedState && storedState !== queryParams.get('state')) {
                 this.deleteState();
-                if ((_a = this.opts) === null || _a === void 0 ? void 0 : _a.test) {
+                if ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment) {
                     console.error('Invalid state');
                 }
             }

@@ -3,15 +3,15 @@ import { SignedMessage, WallyConnectorOptions } from './types';
 export class WallyConnector {
   private host: string;
 
-  constructor(private readonly clientId: string, private readonly opts?: WallyConnectorOptions) {
-    this.host = (this.opts?.test) ? 'http://localhost:3000' : 'https://api.wally.xyz';
+  constructor(private readonly clientId: string, private readonly options?: WallyConnectorOptions) {
+    this.host = (this.options?.isDevelopment) ? 'http://localhost:3000' : 'https://api.wally.xyz';
   }
 
   public loginWithEmail() {
     const state = this.generateStateCode();
     this.saveState(state);
     const queryParams = new URLSearchParams({ clientId: this.clientId, state });
-    window.location.replace((this.opts?.test)
+    window.location.replace((this.options?.isDevelopment)
       ? `${this.host}/oauth/otp?${queryParams.toString()}`
       : `${this.host}/oauth/otp?${queryParams.toString()}`
     );
@@ -26,7 +26,7 @@ export class WallyConnector {
     const queryParams = new URLSearchParams(window.location.search);
     if (storedState && storedState !== queryParams.get('state')) {
       this.deleteState();
-      if (this.opts?.test) {
+      if (this.options?.isDevelopment) {
         console.error('Invalid state');
       }
     }

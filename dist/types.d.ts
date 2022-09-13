@@ -3,5 +3,5 @@ export declare type SignedMessage = {
     signature: string;
 };
 export declare type WallyConnectorOptions = {
-    test?: boolean;
+    isDevelopment?: boolean;
 };
