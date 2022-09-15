@@ -6,3 +6,11 @@ export type SignedMessage = {
 export type WallyConnectorOptions = {
   isDevelopment?: boolean;
 };
+
+export type Wallet = {
+  id: string;
+  email: string;
+  address: string;
+  tags: string[];
+  referenceId: string;
+};
