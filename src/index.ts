@@ -120,7 +120,7 @@ export class WallyConnector {
     return (await resp.json()) as Promise<SignedMessage>;
   }
 
-  async getWallets(): Promise<Wallet[]> {
+  public async getWallets(): Promise<Wallet[]> {
     const resp = await fetch(`${this.host}/app/user/wallets`, {
       method: "GET",
       headers: {
