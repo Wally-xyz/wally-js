@@ -120,7 +120,7 @@ export class WallyConnector {
     return (await resp.json()) as Promise<SignedMessage>;
   }
 
-  public async getWallets(): Promise<Wallet[]> {
+  public async getWallet(): Promise<Wallet> {
     const resp = await fetch(`${this.host}/app/user/wallets`, {
       method: "GET",
       headers: {
@@ -135,6 +135,6 @@ export class WallyConnector {
         "Server returned a non-successful response when getting walletAddresses"
       );
     }
-    return (await resp.json()) as Promise<Wallet[]>;
+    return (await resp.json())?.[0] as Promise<Wallet>;
   }
 }
