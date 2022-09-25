@@ -37,26 +37,36 @@ class WallyConnector {
             if (storedState && storedState !== queryParams.get('state')) {
                 this.deleteState();
                 if ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment) {
-                    console.error('Invalid state');
+                    console.error('Invalid Wally state');
                 }
             }
             this.deleteState();
             const authCode = queryParams.get('authorization_code');
-            const resp = yield fetch(`${this.host}/oauth/token`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                },
-                body: JSON.stringify({
-                    authCode,
-                }),
-            });
-            if (!resp.ok || resp.status >= 300) {
-                throw new Error('Server returned a non-successful response when exchanging authorization code for token');
+            let resp;
+            try {
+                resp = yield fetch(`${this.host}/oauth/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({
+                        authCode,
+                    }),
+                });
+                if (resp && (!(resp === null || resp === void 0 ? void 0 : resp.ok) || (resp === null || resp === void 0 ? void 0 : resp.status) >= 300)) {
+                    const data = yield resp.json();
+                    this.setAuthToken(data.token);
+                }
+                else {
+                    this.deleteState();
+                    console.error('Wally server returned a non-successful response when exchanging authorization code for token');
+                }
             }
-            const data = yield resp.json();
-            this.setAuthToken(data.token);
+            catch (err) {
+                console.error(`Unable to fetch Wally access token: ${err}`);
+                this.deleteState();
+            }
         });
     }
     setAuthToken(authToken) {
@@ -102,7 +112,7 @@ class WallyConnector {
                 },
             });
             if (!resp.ok || resp.status >= 300) {
-                throw new Error('Server returned a non-successful response when signing a message');
+                throw new Error('Wally server returned a non-successful response when signing a message');
             }
             return yield resp.json();
         });
