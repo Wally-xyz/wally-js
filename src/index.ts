@@ -50,7 +50,7 @@ export class WallyConnector {
         this.setAuthToken(data.token);
       } else {
         this.deleteState();
-        console.error('Wally server returned a non-successful response when exchanging authorization code for token');
+        console.error('The Wally server returned a non-successful response when exchanging authorization code for token');
       }
     } catch (err) {
       console.error(`Unable to fetch Wally access token: ${err}`);
