@@ -4,7 +4,7 @@ export class WallyConnector {
   private host: string;
 
   constructor(private readonly clientId: string, private readonly options?: WallyConnectorOptions) {
-    this.host = (this.options?.isDevelopment) ? 'http://localhost:3000' : 'https://api.wally.xyz';
+    this.host = (this.options?.isDevelopment) ? 'http://localhost:8888/v1' : 'https://api.wally.xyz';
   }
 
   public loginWithEmail() {
@@ -45,7 +45,7 @@ export class WallyConnector {
           authCode,
         }),
       });
-      if (resp && (!resp?.ok || resp?.status >= 300)) {
+      if (resp && resp?.ok && resp?.status < 300) {
         const data = await resp.json();
         this.setAuthToken(data.token);
       } else {
