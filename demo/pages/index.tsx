@@ -1,12 +1,25 @@
 import Head from "next/head";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { WallyConnector } from "../../dist";
 
 import styles from "../styles/Home.module.css";
 
 export default function Home() {
-  const wallyConnector = useRef(new WallyConnector());
+  const wallyConnector = useRef(
+    new WallyConnector(
+      process.env.NEXT_PUBLIC_CLIENT_ID, 
+      {
+        isDevelopment: process.env.NEXT_PUBLIC_IS_DEVELOPMENT === 'true',
+      }
+    )
+  );
+
+  useEffect(() => {
+    if (wallyConnector.current.isRedirected()) {
+      wallyConnector.current.handleRedirect()
+    }
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -18,15 +31,16 @@ export default function Home() {
         <h1 className={styles.title}>Wally Connector Demo</h1>
         <button
           onClick={() => {
-            wallyConnector.current.authorise();
+            wallyConnector.current.loginWithEmail();
           }}
         >
           Login
         </button>
         <button
           onClick={async () => {
-            const wallets = await wallyConnector.current.getWallets();
-            console.log("wallets = ", wallets);
+            console.log("stub");
+            // const wallets = await wallyConnector.current.getWallets();
+            // console.log("wallets = ", wallets);
           }}
         >
           Get Wallets
