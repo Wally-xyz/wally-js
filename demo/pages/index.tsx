@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-
-import { WallyConnector } from "../../dist";
-
 import detectEthereumProvider from '@metamask/detect-provider';
 import { MetaMaskInpageProvider } from '@metamask/providers';
 
+import { WallyConnector } from "../../dist";
+
+import Connect from "components/connect";
+import Sign from 'components/sign';
+
 import styles from "styles/Home.module.css";
 
-const MetaMaskInfo = (props: any) => {
 
+export default function Home() {
   const [provider, setProvider] = useState<MetaMaskInpageProvider>(null);
-  const [addr, setAddr] = useState(null);
+  const [address, setAddress] = useState(null);
 
   useEffect(() => {
     detectEthereumProvider().then(p => {
@@ -22,27 +24,11 @@ const MetaMaskInfo = (props: any) => {
 
   useEffect(() => {
     if (provider && provider.selectedAddress) {
-      setAddr(provider.selectedAddress);
+      setAddress(provider.selectedAddress);
     }
   }, [provider])
 
-  if (!provider) {
-    return null;
-  }
 
-  return (
-    addr === null
-      ? <button onClick={() => {
-        provider.request({ method: 'eth_requestAccounts' }).then(res => {
-          console.log({ res });
-          setAddr(res[0]);
-        })
-      }}>Connect with MetaMask</button>
-      : <h2>Connected at {addr}</h2>
-  );
-}
-
-export default function Home() {
   const wallyConnector = useRef(
     new WallyConnector(
       process.env.NEXT_PUBLIC_CLIENT_ID,
@@ -61,23 +47,13 @@ export default function Home() {
   return (
     <>
       <h1 className={styles.title}>EasySign Demo</h1>
-      {typeof window !== 'undefined' ? <MetaMaskInfo /> : null}
-      <button
-        onClick={() => {
-          wallyConnector.current.loginWithEmail();
-        }}
-      >
-        Login
-      </button>
-      <button
-        onClick={async () => {
-          console.log("stub");
-          // const wallets = await wallyConnector.current.getWallets();
-          // console.log("wallets = ", wallets);
-        }}
-      >
-        Get Wallets
-      </button>
+      {address
+        ? <Sign provider={provider} address={address}/>
+        : <Connect
+          provider={provider}
+          setAddress={setAddress}
+        />
+      }
     </>
   );
 }
