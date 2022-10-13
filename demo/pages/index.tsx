@@ -36,7 +36,7 @@ export default function Home() {
         setProvider(p as MetaMaskInpageProvider);
       }
     });
-  }, [])
+  }, [isUsingWally]);
 
   useEffect(() => {
     if (provider && provider.selectedAddress) {
