@@ -15,7 +15,7 @@ class WallyConnector {
         var _a;
         this.clientId = clientId;
         this.options = options;
-        this.host = ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment) ? 'http://localhost:3000' : 'https://api.wally.xyz';
+        this.host = ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment) ? 'http://localhost:8888/v1' : 'https://api.wally.xyz';
     }
     loginWithEmail() {
         var _a;
@@ -54,13 +54,13 @@ class WallyConnector {
                         authCode,
                     }),
                 });
-                if (resp && (!(resp === null || resp === void 0 ? void 0 : resp.ok) || (resp === null || resp === void 0 ? void 0 : resp.status) >= 300)) {
+                if (resp && (resp === null || resp === void 0 ? void 0 : resp.ok) && (resp === null || resp === void 0 ? void 0 : resp.status) < 300) {
                     const data = yield resp.json();
                     this.setAuthToken(data.token);
                 }
                 else {
                     this.deleteState();
-                    console.error('Wally server returned a non-successful response when exchanging authorization code for token');
+                    console.error('The Wally server returned a non-successful response when exchanging authorization code for token');
                 }
             }
             catch (err) {
