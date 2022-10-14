@@ -1,12 +1,18 @@
+import React from 'react';
 import Layout from 'components/layout';
-import 'styles/globals.css'
+import 'styles/globals.css';
 
-function MyApp({ Component, pageProps }) {
+interface LayoutProps {
+  Component: React.JSXElementConstructor<any>;
+  pageProps: any;
+}
+
+const MyApp: React.FC<LayoutProps> = ({ Component, pageProps }) => {
   return (
     <Layout>
       <Component {...pageProps} />
     </Layout>
-  )
-}
+  );
+};
 
-export default MyApp
+export default MyApp;

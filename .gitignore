@@ -27,6 +27,10 @@ node_modules
 /demo/yarn-debug.log*
 /demo/yarn-error.log*
 /demo/.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
 # local env files
 .env*.local
@@ -39,3 +43,5 @@ node_modules
 /demo/next-env.d.ts
 
 test_page/public/sdk
+
+.eslintcache

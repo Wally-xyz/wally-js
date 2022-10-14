@@ -1,1 +1,1 @@
-export const APP_ROOT = "https://api.wally.xyz/";
+export const APP_ROOT = 'https://api.wally.xyz/';

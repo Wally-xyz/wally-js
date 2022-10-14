@@ -3,25 +3,31 @@ import { SignedMessage, WallyConnectorOptions } from './types';
 export class WallyConnector {
   private host: string;
 
-  constructor(private readonly clientId: string, private readonly options?: WallyConnectorOptions) {
-    this.host = (this.options?.isDevelopment) ? 'http://localhost:8888/v1' : 'https://api.wally.xyz';
+  constructor(
+    private readonly clientId: string,
+    private readonly options?: WallyConnectorOptions
+  ) {
+    this.host = this.options?.isDevelopment
+      ? 'http://localhost:8888/v1'
+      : 'https://api.wally.xyz';
   }
 
-  public loginWithEmail() {
+  public loginWithEmail(): void {
     const state = this.generateStateCode();
     this.saveState(state);
     const queryParams = new URLSearchParams({ clientId: this.clientId, state });
-    window.location.replace((this.options?.isDevelopment)
-      ? `${this.host}/oauth/otp?${queryParams.toString()}`
-      : `${this.host}/oauth/otp?${queryParams.toString()}`
+    window.location.replace(
+      this.options?.isDevelopment
+        ? `${this.host}/oauth/otp?${queryParams.toString()}`
+        : `${this.host}/oauth/otp?${queryParams.toString()}`
     );
   }
 
-  public isRedirected() {
+  public isRedirected(): boolean {
     return this.getState() !== null;
   }
 
-  public async handleRedirect() {
+  public async handleRedirect(): Promise<void> {
     const storedState = this.getState();
     const queryParams = new URLSearchParams(window.location.search);
     if (storedState && storedState !== queryParams.get('state')) {
@@ -50,7 +56,9 @@ export class WallyConnector {
         this.setAuthToken(data.token);
       } else {
         this.deleteState();
-        console.error('The Wally server returned a non-successful response when exchanging authorization code for token');
+        console.error(
+          'The Wally server returned a non-successful response when exchanging authorization code for token'
+        );
       }
     } catch (err) {
       console.error(`Unable to fetch Wally access token: ${err}`);
@@ -98,18 +106,23 @@ export class WallyConnector {
 
   async signMessage(message: string): Promise<SignedMessage> {
     const queryString = new URLSearchParams({ message }).toString();
-    const resp = await fetch(`${this.host}/app/user/sign-message?${queryString}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${this.getAuthToken()}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-    });
+    const resp = await fetch(
+      `${this.host}/app/user/sign-message?${queryString}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${this.getAuthToken()}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      }
+    );
 
     if (!resp.ok || resp.status >= 300) {
-      throw new Error('Wally server returned a non-successful response when signing a message');
+      throw new Error(
+        'Wally server returned a non-successful response when signing a message'
+      );
     }
-    return await resp.json() as Promise<SignedMessage>;
+    return (await resp.json()) as Promise<SignedMessage>;
   }
 }
