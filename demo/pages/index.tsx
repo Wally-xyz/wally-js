@@ -13,6 +13,7 @@ const Home: React.FC = () => {
   const [isUsingWally, setIsUsingWally] = useState(true);
   const [provider, setProvider] = useState<MetaMaskInpageProvider | any>(null);
   const [address, setAddress] = useState(null);
+  const [isWallyLoggedIn, setIsWallyLoggedIn] = useState(false);
 
   const detectProvider = useCallback(() => {
     if (isUsingWally) {
@@ -42,16 +43,36 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     if (isUsingWally && provider && provider.isRedirected()) {
-      provider.handleRedirect();
+      provider.handleRedirect().then(() => {
+        setIsWallyLoggedIn(true);
+      });
+    }
+  }, [isUsingWally, provider]);
+
+  useEffect(() => {
+    if (
+      isUsingWally &&
+      provider &&
+      provider.isLoggedIn &&
+      provider.isLoggedIn()
+    ) {
+      setIsWallyLoggedIn(true);
     }
   }, [isUsingWally, provider]);
 
   const onWallyClick = () => {
-    provider.loginWithEmail();
+    if (provider && provider.isLoggedIn && provider.isLoggedIn()) {
+      setIsWallyLoggedIn(true);
+    } else {
+      provider.loginWithEmail();
+    }
   };
 
   const onChange = (e) => {
     setIsUsingWally(e.target.value === 'wally');
+    setProvider(null);
+    setAddress(null);
+    setIsWallyLoggedIn(false);
   };
 
   return (
@@ -75,7 +96,14 @@ const Home: React.FC = () => {
           onChange={onChange}
         />
         Wally
-        {isUsingWally ? <button onClick={onWallyClick}>Login</button> : null}
+        <br />
+        {isUsingWally ? (
+          isWallyLoggedIn ? (
+            'Logged In'
+          ) : (
+            <button onClick={onWallyClick}>Login</button>
+          )
+        ) : null}
       </span>
       {address ? (
         <Sign provider={provider} address={address} />

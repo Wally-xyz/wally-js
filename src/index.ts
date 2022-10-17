@@ -1,7 +1,19 @@
 import { SignedMessage, WallyConnectorOptions } from './types';
 
+enum MethodName {
+  'eth_requestAccounts' = 'eth_requestAccounts',
+  'personal_sign' = 'personal_sign',
+  'eth_getBalance' = 'eth_getBalance',
+}
+
+interface RequestObj {
+  method: MethodName;
+  params: any;
+}
+
 export class WallyConnector {
   private host: string;
+  public selectedAddress: string | null;
 
   constructor(
     private readonly clientId: string,
@@ -10,6 +22,7 @@ export class WallyConnector {
     this.host = this.options?.isDevelopment
       ? 'http://localhost:8888/v1'
       : 'https://api.wally.xyz';
+    this.selectedAddress = null;
   }
 
   public loginWithEmail(): void {
@@ -25,6 +38,10 @@ export class WallyConnector {
 
   public isRedirected(): boolean {
     return this.getState() !== null;
+  }
+
+  public isLoggedIn(): boolean {
+    return !!this.getAuthToken();
   }
 
   public async handleRedirect(): Promise<void> {
@@ -104,25 +121,59 @@ export class WallyConnector {
     localStorage.removeItem(`wally:${this.clientId}:state:token`);
   }
 
-  async signMessage(message: string): Promise<SignedMessage> {
-    const queryString = new URLSearchParams({ message }).toString();
-    const resp = await fetch(
-      `${this.host}/app/user/sign-message?${queryString}`,
-      {
-        method: 'GET',
+  async request(req: RequestObj): Promise<any> {
+    switch (req.method) {
+      case 'eth_requestAccounts':
+        return this.requestAccounts();
+      case 'personal_sign':
+        return this.signMessage(req.params);
+      case MethodName.eth_getBalance:
+        return Promise.resolve('4200000000');
+    }
+  }
+
+  async requestAccounts(): Promise<string[]> {
+    let resp: Response;
+    try {
+      resp = await fetch(`${this.host}/oauth/me`, {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${this.getAuthToken()}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
         },
+      });
+      if (resp && resp?.ok && resp?.status < 300) {
+        const data = await resp.json();
+        this.selectedAddress = data.address;
+        return [this.selectedAddress!];
+      } else {
+        console.error(
+          'The Wally server returned a non-successful response when fetching wallet details'
+        );
       }
-    );
+    } catch (err) {
+      console.error(`Unable to fetch Wally wallet: ${err}`);
+    }
+    return [];
+  }
+
+  async signMessage(params: string[]): Promise<SignedMessage | string> {
+    const resp = await fetch(`${this.host}/oauth/wallet/sign-message`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.getAuthToken()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: params[1],
+      }),
+    });
 
     if (!resp.ok || resp.status >= 300) {
       throw new Error(
         'Wally server returned a non-successful response when signing a message'
       );
     }
-    return (await resp.json()) as Promise<SignedMessage>;
+    const json = await resp.json();
+    return json.signature;
   }
 }

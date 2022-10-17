@@ -20,7 +20,7 @@ const Connect: React.FC<ConnectProps> = ({ provider, setAddress }) => {
         });
       }}
     >
-      Connect with MetaMask
+      Connect
     </button>
   );
 };
