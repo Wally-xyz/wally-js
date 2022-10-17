@@ -6,7 +6,9 @@ module.exports = {
   },
   plugins: ['@typescript-eslint'],
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
-  rules: {},
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'off',
+  },
   env: {
     browser: true,
     es2021: true,
