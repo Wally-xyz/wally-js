@@ -10,12 +10,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WallyConnector = void 0;
+var MethodName;
+(function (MethodName) {
+    MethodName["eth_requestAccounts"] = "eth_requestAccounts";
+    MethodName["personal_sign"] = "personal_sign";
+    MethodName["eth_getBalance"] = "eth_getBalance";
+})(MethodName || (MethodName = {}));
 class WallyConnector {
     constructor(clientId, options) {
         var _a;
         this.clientId = clientId;
         this.options = options;
-        this.host = ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment) ? 'http://localhost:8888/v1' : 'https://api.wally.xyz';
+        this.host = ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment)
+            ? 'http://localhost:8888/v1'
+            : 'https://api.wally.xyz';
+        this.selectedAddress = null;
     }
     loginWithEmail() {
         var _a;
@@ -28,6 +37,9 @@ class WallyConnector {
     }
     isRedirected() {
         return this.getState() !== null;
+    }
+    isLoggedIn() {
+        return !!this.getAuthToken();
     }
     handleRedirect() {
         var _a;
@@ -100,21 +112,63 @@ class WallyConnector {
     deleteState() {
         localStorage.removeItem(`wally:${this.clientId}:state:token`);
     }
-    signMessage(message) {
+    request(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            const queryString = new URLSearchParams({ message }).toString();
-            const resp = yield fetch(`${this.host}/app/user/sign-message?${queryString}`, {
-                method: 'GET',
+            console.log('requesting!', { req });
+            switch (req.method) {
+                case 'eth_requestAccounts':
+                    return this.requestAccounts();
+                case 'personal_sign':
+                    return this.signMessage(req.params);
+                case MethodName.eth_getBalance:
+                    return Promise.resolve('4200000000');
+            }
+        });
+    }
+    requestAccounts() {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log('token:', this.getAuthToken());
+            let resp;
+            try {
+                resp = yield fetch(`${this.host}/oauth/me`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${this.getAuthToken()}`,
+                    },
+                });
+                if (resp && (resp === null || resp === void 0 ? void 0 : resp.ok) && (resp === null || resp === void 0 ? void 0 : resp.status) < 300) {
+                    const data = yield resp.json();
+                    this.selectedAddress = data.address;
+                    return [this.selectedAddress];
+                }
+                else {
+                    console.error('The Wally server returned a non-successful response when fetching wallet details');
+                }
+            }
+            catch (err) {
+                console.error(`Unable to fetch Wally wallet: ${err}`);
+            }
+            return [];
+        });
+    }
+    signMessage(params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const resp = yield fetch(`${this.host}/oauth/wallet/sign-message`, {
+                method: 'POST',
                 headers: {
                     Authorization: `Bearer ${this.getAuthToken()}`,
                     'Content-Type': 'application/json',
-                    Accept: 'application/json',
+                    // Accept: 'application/json',
                 },
+                body: JSON.stringify({
+                    message: params[1],
+                })
             });
             if (!resp.ok || resp.status >= 300) {
                 throw new Error('Wally server returned a non-successful response when signing a message');
             }
-            return yield resp.json();
+            const json = yield resp.json();
+            return json.signature;
         });
     }
 }

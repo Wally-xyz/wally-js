@@ -11,6 +11,7 @@ const Sign: React.FC<SignProps> = ({ address, provider }) => {
   const [balance, setBalance] = useState(null);
   const [message, setMessage] = useState('');
   const [encrypted, setEncrypted] = useState('');
+  const [messageAgain, setMessageAgain] = useState('');
   const [result, setResult] = useState(null);
   const [verified, setVerified] = useState(null);
 
@@ -40,32 +41,43 @@ const Sign: React.FC<SignProps> = ({ address, provider }) => {
   };
 
   const onVerify = () => {
-    const res = ethers.utils.verifyMessage(message, encrypted);
-    console.log({ res });
+    const res = ethers.utils.verifyMessage(messageAgain, encrypted);
     setVerified(res);
   };
 
   return (
     <>
-      <h2>Connected @ {address}</h2>
-      <h2>Balance: {balance} Ether</h2>
-      Message:{' '}
+      <br />
+      <b>Connected @ {address}</b>
+      <b>Balance: {balance} Ether</b>
+      <h3>Message:</h3>
       <input
         type="text"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
       />
       <button onClick={onClick}>Sign</button>
-      <h3>Result: {result}</h3>
-      <br></br>
-      Verify:{' '}
-      <input
-        type="text"
-        value={encrypted}
-        onChange={(e) => setEncrypted(e.target.value)}
-      />
+      <b>Result: {result}</b>
+      <br />
+      <h3>Verify:</h3>
+      <label>
+        Signed Hash{' '}
+        <input
+          type="text"
+          value={encrypted}
+          onChange={(e) => setEncrypted(e.target.value)}
+        />
+      </label>
+      <label>
+        Message{' '}
+        <input
+          type="text"
+          value={messageAgain}
+          onChange={(e) => setMessageAgain(e.target.value)}
+        />
+      </label>
       <button onClick={onVerify}>Get Address</button>
-      <h3>Address: {verified}</h3>
+      <b>Address: {verified}</b>
     </>
   );
 };
