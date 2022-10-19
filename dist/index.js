@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WallyConnector = void 0;
+const constants_1 = require("./constants");
 var MethodName;
 (function (MethodName) {
     MethodName["eth_requestAccounts"] = "eth_requestAccounts";
@@ -27,13 +28,26 @@ class WallyConnector {
         this.selectedAddress = null;
     }
     loginWithEmail() {
-        var _a;
-        const state = this.generateStateCode();
-        this.saveState(state);
-        const queryParams = new URLSearchParams({ clientId: this.clientId, state });
-        window.location.replace(((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment)
-            ? `${this.host}/oauth/otp?${queryParams.toString()}`
-            : `${this.host}/oauth/otp?${queryParams.toString()}`);
+        return __awaiter(this, void 0, void 0, function* () {
+            const state = this.generateStateCode();
+            this.saveState(state);
+            const queryParams = new URLSearchParams({ clientId: this.clientId, state });
+            window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank', `popup,width=600,height=600,\
+      top=${window.screenY + 100},left=${window.screenX + 100}`);
+            const scrim = document.createElement('div');
+            scrim.setAttribute('style', constants_1.SCRIM_STYLES);
+            document.body.appendChild(scrim);
+            return new Promise((resolve) => {
+                window.addEventListener('storage', (e) => {
+                    console.log('storage', { e });
+                    if (!this.getAuthToken()) {
+                        return;
+                    }
+                    resolve();
+                    document.body.removeChild(scrim);
+                });
+            });
+        });
     }
     isRedirected() {
         return this.getState() !== null;
@@ -81,11 +95,64 @@ class WallyConnector {
             }
         });
     }
+    /**
+     * Sensitive things:
+     * - clientId
+     * - host
+     * - isDevelopment
+     * @returns
+     */
+    static handleRedirect(clientId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!clientId) {
+                return;
+            }
+            const storedState = WallyConnector.getState(clientId);
+            const queryParams = new URLSearchParams(window.location.search);
+            if (storedState && storedState !== queryParams.get('state')) {
+                WallyConnector.deleteState(clientId);
+                // if (this.options?.isDevelopment) {
+                console.error('Invalid Wally state');
+                // }
+            }
+            WallyConnector.deleteState(clientId);
+            const authCode = queryParams.get('authorization_code');
+            let resp;
+            try {
+                // resp = await fetch(`${this.host}/oauth/token`, {
+                resp = yield fetch(`http://localhost:8888/v1/oauth/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                    },
+                    body: JSON.stringify({
+                        authCode,
+                    }),
+                });
+                if (resp && (resp === null || resp === void 0 ? void 0 : resp.ok) && (resp === null || resp === void 0 ? void 0 : resp.status) < 300) {
+                    const data = yield resp.json();
+                    WallyConnector.setAuthToken(clientId, data.token);
+                }
+                else {
+                    WallyConnector.deleteState(clientId);
+                    console.error('The Wally server returned a non-successful response when exchanging authorization code for token');
+                }
+            }
+            catch (err) {
+                console.error(`Unable to fetch Wally access token: ${err}`);
+                WallyConnector.deleteState(clientId);
+            }
+        });
+    }
     setAuthToken(authToken) {
         localStorage.setItem(`wally:${this.clientId}:token`, authToken);
     }
     getAuthToken() {
         return localStorage.getItem(`wally:${this.clientId}:token`);
+    }
+    static setAuthToken(clientId, authToken) {
+        localStorage.setItem(`wally:${clientId}:token`, authToken);
     }
     generateStateCode(length = 10) {
         const chars = [];
@@ -107,27 +174,34 @@ class WallyConnector {
         localStorage.setItem(`wally:${this.clientId}:state:token`, state);
     }
     getState() {
-        return localStorage.getItem(`wally:${this.clientId}:state:token`);
+        return WallyConnector.getState(this.clientId);
     }
     deleteState() {
-        localStorage.removeItem(`wally:${this.clientId}:state:token`);
+        WallyConnector.deleteState(this.clientId);
+    }
+    static getState(clientId) {
+        return localStorage.getItem(`wally:${clientId}:state:token`);
+    }
+    static deleteState(clientId) {
+        localStorage.removeItem(`wally:${clientId}:state:token`);
     }
     request(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('requesting!', { req });
+            if (!this.isLoggedIn()) {
+                yield this.loginWithEmail();
+            }
             switch (req.method) {
                 case 'eth_requestAccounts':
                     return this.requestAccounts();
                 case 'personal_sign':
                     return this.signMessage(req.params);
                 case MethodName.eth_getBalance:
-                    return Promise.resolve('4200000000');
+                    return this._request(req.method, req.params);
             }
         });
     }
     requestAccounts() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('token:', this.getAuthToken());
             let resp;
             try {
                 resp = yield fetch(`${this.host}/oauth/me`, {
@@ -158,17 +232,43 @@ class WallyConnector {
                 headers: {
                     Authorization: `Bearer ${this.getAuthToken()}`,
                     'Content-Type': 'application/json',
-                    // Accept: 'application/json',
                 },
                 body: JSON.stringify({
                     message: params[1],
-                })
+                }),
             });
             if (!resp.ok || resp.status >= 300) {
                 throw new Error('Wally server returned a non-successful response when signing a message');
             }
             const json = yield resp.json();
             return json.signature;
+        });
+    }
+    /**
+     * Handle other non-wally-specific methods - forwards to ethers/alchemy
+     * on the backend
+     * @param method The RPC Method
+     * @param params Arbitrary array of params
+     * @returns whatever you want it to
+     */
+    _request(method, params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const resp = yield fetch(`${this.host}/oauth/wallet/send`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${this.getAuthToken()}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    method,
+                    params,
+                }),
+            });
+            if (!resp.ok || resp.status >= 300) {
+                throw new Error('Wally server returned a non-successful response when signing a message');
+            }
+            const body = yield resp.text();
+            return body;
         });
     }
 }

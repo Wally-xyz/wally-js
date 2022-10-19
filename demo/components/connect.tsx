@@ -15,7 +15,6 @@ const Connect: React.FC<ConnectProps> = ({ provider, setAddress }) => {
     <button
       onClick={() => {
         provider.request({ method: 'eth_requestAccounts' }).then((res) => {
-          console.log({ res });
           setAddress(res[0]);
         });
       }}

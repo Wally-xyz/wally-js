@@ -7,6 +7,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "./node_modules/.bin/tsc --project .",
+    "watch": "./node_modules/.bin/tsc --watch --project .",
     "build:test_page": "./node_modules/.bin/tsc --project . --outDir test_page/public/sdk/dist",
     "build:test_page:watch": "./node_modules/.bin/tsc --watch --project . --outDir test_page/public/sdk/dist",
     "build:clean": "rimraf dist && yarn build",

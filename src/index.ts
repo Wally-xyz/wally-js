@@ -1,4 +1,5 @@
 import { SignedMessage, WallyConnectorOptions } from './types';
+import { SCRIM_STYLES } from './constants';
 
 enum MethodName {
   'eth_requestAccounts' = 'eth_requestAccounts',
@@ -25,15 +26,30 @@ export class WallyConnector {
     this.selectedAddress = null;
   }
 
-  public loginWithEmail(): void {
+  public async loginWithEmail(): Promise<void> {
     const state = this.generateStateCode();
     this.saveState(state);
     const queryParams = new URLSearchParams({ clientId: this.clientId, state });
-    window.location.replace(
-      this.options?.isDevelopment
-        ? `${this.host}/oauth/otp?${queryParams.toString()}`
-        : `${this.host}/oauth/otp?${queryParams.toString()}`
+
+    window.open(
+      `${this.host}/oauth/otp?${queryParams.toString()}`,
+      '_blank',
+      `popup,width=600,height=600,\
+      top=${window.screenY + 100},left=${window.screenX + 100}`
     );
+
+    const scrim = document.createElement('div');
+    scrim.setAttribute('style', SCRIM_STYLES);
+    document.body.appendChild(scrim);
+
+    return new Promise((resolve) => {
+      window.addEventListener('storage', (e) => {
+        console.log('storage', { e });
+        if (!this.getAuthToken()) { return; }
+        resolve();
+        document.body.removeChild(scrim);
+      });
+    });
   }
 
   public isRedirected(): boolean {
@@ -83,12 +99,66 @@ export class WallyConnector {
     }
   }
 
+  /**
+   * Sensitive things:
+   * - clientId
+   * - host
+   * - isDevelopment
+   * @returns
+   */
+  public static async handleRedirect(clientId?: string): Promise<void> {
+    if (!clientId) {
+      return;
+    }
+    const storedState = WallyConnector.getState(clientId);
+    const queryParams = new URLSearchParams(window.location.search);
+    if (storedState && storedState !== queryParams.get('state')) {
+      WallyConnector.deleteState(clientId);
+      // if (this.options?.isDevelopment) {
+      console.error('Invalid Wally state');
+      // }
+    }
+    WallyConnector.deleteState(clientId);
+    const authCode = queryParams.get('authorization_code');
+
+    let resp: Response;
+    try {
+      // resp = await fetch(`${this.host}/oauth/token`, {
+      resp = await fetch(`http://localhost:8888/v1/oauth/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          authCode,
+        }),
+      });
+      if (resp && resp?.ok && resp?.status < 300) {
+        const data = await resp.json();
+        WallyConnector.setAuthToken(clientId, data.token);
+      } else {
+        WallyConnector.deleteState(clientId);
+        console.error(
+          'The Wally server returned a non-successful response when exchanging authorization code for token'
+        );
+      }
+    } catch (err) {
+      console.error(`Unable to fetch Wally access token: ${err}`);
+      WallyConnector.deleteState(clientId);
+    }
+  }
+
   private setAuthToken(authToken: string): void {
     localStorage.setItem(`wally:${this.clientId}:token`, authToken);
   }
 
   private getAuthToken(): string | null {
     return localStorage.getItem(`wally:${this.clientId}:token`);
+  }
+
+  private static setAuthToken(clientId: string, authToken: string): void {
+    localStorage.setItem(`wally:${clientId}:token`, authToken);
   }
 
   private generateStateCode(length = 10) {
@@ -114,21 +184,33 @@ export class WallyConnector {
   }
 
   private getState(): string | null {
-    return localStorage.getItem(`wally:${this.clientId}:state:token`);
+    return WallyConnector.getState(this.clientId);
   }
 
   private deleteState() {
-    localStorage.removeItem(`wally:${this.clientId}:state:token`);
+    WallyConnector.deleteState(this.clientId);
+  }
+
+  private static getState(clientId: string): string | null {
+    return localStorage.getItem(`wally:${clientId}:state:token`);
+  }
+
+  private static deleteState(clientId: string) {
+    localStorage.removeItem(`wally:${clientId}:state:token`);
   }
 
   async request(req: RequestObj): Promise<any> {
+    if (!this.isLoggedIn()) {
+      await this.loginWithEmail();
+    }
+
     switch (req.method) {
       case 'eth_requestAccounts':
         return this.requestAccounts();
       case 'personal_sign':
         return this.signMessage(req.params);
       case MethodName.eth_getBalance:
-        return Promise.resolve('4200000000');
+        return this._request(req.method, req.params);
     }
   }
 
@@ -175,5 +257,34 @@ export class WallyConnector {
     }
     const json = await resp.json();
     return json.signature;
+  }
+
+  /**
+   * Handle other non-wally-specific methods - forwards to ethers/alchemy
+   * on the backend
+   * @param method The RPC Method
+   * @param params Arbitrary array of params
+   * @returns whatever you want it to
+   */
+  private async _request(method: string, params: string[]): Promise<any> {
+    const resp = await fetch(`${this.host}/oauth/wallet/send`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.getAuthToken()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        method,
+        params,
+      }),
+    });
+
+    if (!resp.ok || resp.status >= 300) {
+      throw new Error(
+        'Wally server returned a non-successful response when signing a message'
+      );
+    }
+    const body = await resp.text();
+    return body;
   }
 }
