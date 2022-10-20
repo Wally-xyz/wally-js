@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 const HandleRedirect: React.FC = () => {
-  useEffect(() => {
+  if (typeof window !== 'undefined') {
     window.wally.handleRedirect({
       closeWindow: true,
       appendContent: true,
     });
-  }, []);
+  }
 
   return null;
 };
