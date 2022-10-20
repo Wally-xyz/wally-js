@@ -1,5 +1,36 @@
-import { SignedMessage, WallyConnectorOptions } from './types';
-import { SCRIM_STYLES } from './constants';
+/**
+ * TODO: Everything is in a single file for the moment so that typescript
+ * builds a single script file that can access the global window scope.
+ * Otherwise, it builds a module that needs importing.
+ *
+ * I'll figure out how to clean this up later if it's the direction we
+ * decide to go.
+ */
+
+/**
+ * ------ TYPES --------
+ */
+
+type SignedMessage = {
+  address: string;
+  signature: string;
+};
+
+type WallyConnectorOptions = {
+  clientId: string,
+  isDevelopment?: boolean;
+  devUrl?: string;
+};
+
+type RedirectOptions = {
+  closeWindow?: boolean;
+  appendContent?: boolean;
+};
+
+interface RequestObj {
+  method: MethodName;
+  params: any;
+}
 
 enum MethodName {
   'eth_requestAccounts' = 'eth_requestAccounts',
@@ -7,45 +38,118 @@ enum MethodName {
   'eth_getBalance' = 'eth_getBalance',
 }
 
-interface RequestObj {
-  method: MethodName;
-  params: any;
-}
 
-export class WallyConnector {
-  private host: string;
+/**
+ * ------ CONSTANTS --------
+ */
+
+const APP_ROOT = 'https://api.wally.xyz/';
+
+const getScrimElement = (): HTMLElement => {
+  const scrim = document.createElement('div');
+  scrim.style.position = 'absolute';
+  scrim.style.top = '0';
+  scrim.style.left = '0';
+  scrim.style.width = '100%';
+  scrim.style.height = '100%';
+  scrim.style.background = '#9995';
+  const text = document.createElement('div');
+  text.innerText = 'Logging in to Wally...';
+  text.style.position = 'absolute';
+  text.style.width = '256px';
+  text.style.height = '128px';
+  text.style.background = '#CCC';
+  text.style.color = '#222';
+  text.style.fontWeight = 'bold';
+  text.style.textAlign = 'center';
+  text.style.paddingTop = '48px';
+  text.style.margin = 'auto';
+  text.style.top = '0';
+  text.style.left = '0';
+  text.style.right = '0';
+  text.style.bottom = '0';
+  text.style.borderRadius = '5px';
+  text.style.boxShadow = '0px 3px 24px 3px #222c';
+  scrim.appendChild(text);
+  return scrim;
+};
+
+const getRedirectPage = (): HTMLElement => {
+  const containerEl = document.createElement('div');
+  containerEl.style.position = 'absolute';
+  containerEl.style.top = '50%';
+  containerEl.style.left = '50%';
+  containerEl.style.transform = 'translate(-50%, -50%)';
+  containerEl.style.textAlign = 'center';
+
+  const el = document.createElement('h1');
+  el.innerText = 'Logged In To Wally!';
+
+  const img = document.createElement('img');
+  img.src = '/logo.gif';
+  img.width = 150;
+
+  const caption = document.createElement('p');
+  caption.innerText = 'Redirecting...';
+  caption.style.fontStyle = 'italic';
+
+  containerEl.appendChild(el);
+  containerEl.appendChild(img);
+  containerEl.appendChild(caption);
+
+  return containerEl;
+};
+
+
+/**
+ * ------ MAIN --------
+ */
+
+class WallyConnector {
+  private clientId: string | null;
+  private host: string | null;
+  private isDevelopment: boolean;
   public selectedAddress: string | null;
+  private didHandleRedirect: boolean;
 
-  constructor(
-    private readonly clientId: string,
-    private readonly options?: WallyConnectorOptions
-  ) {
-    this.host = this.options?.isDevelopment
-      ? 'http://localhost:8888/v1'
-      : 'https://api.wally.xyz';
+  constructor() {
+    this.clientId = null;
+    this.host = null;
     this.selectedAddress = null;
+    this.isDevelopment = false;
+    this.didHandleRedirect = false;
+  }
+
+  public init({
+    clientId,
+    isDevelopment = false,
+    devUrl = '',
+  }: WallyConnectorOptions): void {
+    this.clientId = clientId;
+    this.isDevelopment = isDevelopment;
+    this.host = isDevelopment
+      ? devUrl
+      : APP_ROOT;
   }
 
   public async loginWithEmail(): Promise<void> {
+    if (!this.clientId) {
+      return;
+    }
     const state = this.generateStateCode();
     this.saveState(state);
     const queryParams = new URLSearchParams({ clientId: this.clientId, state });
 
-    window.open(
-      `${this.host}/oauth/otp?${queryParams.toString()}`,
-      '_blank',
-      `popup,width=600,height=600,\
-      top=${window.screenY + 100},left=${window.screenX + 100}`
-    );
+    window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');
 
-    const scrim = document.createElement('div');
-    scrim.setAttribute('style', SCRIM_STYLES);
+    const scrim = getScrimElement();
     document.body.appendChild(scrim);
 
     return new Promise((resolve) => {
       window.addEventListener('storage', (e) => {
-        console.log('storage', { e });
-        if (!this.getAuthToken()) { return; }
+        if (!this.getAuthToken()) {
+          return;
+        }
         resolve();
         document.body.removeChild(scrim);
       });
@@ -60,12 +164,24 @@ export class WallyConnector {
     return !!this.getAuthToken();
   }
 
-  public async handleRedirect(): Promise<void> {
+  public async handleRedirect({
+    closeWindow = false,
+    appendContent = false,
+  }: RedirectOptions): Promise<void> {
+    if (this.didHandleRedirect) {
+      return;
+    }
+    this.didHandleRedirect = true;
+
+    if (appendContent) {
+      document.body.appendChild(getRedirectPage());
+    }
+
     const storedState = this.getState();
     const queryParams = new URLSearchParams(window.location.search);
     if (storedState && storedState !== queryParams.get('state')) {
       this.deleteState();
-      if (this.options?.isDevelopment) {
+      if (this.isDevelopment) {
         console.error('Invalid Wally state');
       }
     }
@@ -97,55 +213,9 @@ export class WallyConnector {
       console.error(`Unable to fetch Wally access token: ${err}`);
       this.deleteState();
     }
-  }
 
-  /**
-   * Sensitive things:
-   * - clientId
-   * - host
-   * - isDevelopment
-   * @returns
-   */
-  public static async handleRedirect(clientId?: string): Promise<void> {
-    if (!clientId) {
-      return;
-    }
-    const storedState = WallyConnector.getState(clientId);
-    const queryParams = new URLSearchParams(window.location.search);
-    if (storedState && storedState !== queryParams.get('state')) {
-      WallyConnector.deleteState(clientId);
-      // if (this.options?.isDevelopment) {
-      console.error('Invalid Wally state');
-      // }
-    }
-    WallyConnector.deleteState(clientId);
-    const authCode = queryParams.get('authorization_code');
-
-    let resp: Response;
-    try {
-      // resp = await fetch(`${this.host}/oauth/token`, {
-      resp = await fetch(`http://localhost:8888/v1/oauth/token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          authCode,
-        }),
-      });
-      if (resp && resp?.ok && resp?.status < 300) {
-        const data = await resp.json();
-        WallyConnector.setAuthToken(clientId, data.token);
-      } else {
-        WallyConnector.deleteState(clientId);
-        console.error(
-          'The Wally server returned a non-successful response when exchanging authorization code for token'
-        );
-      }
-    } catch (err) {
-      console.error(`Unable to fetch Wally access token: ${err}`);
-      WallyConnector.deleteState(clientId);
+    if (closeWindow) {
+      window.setTimeout(window.close, 1000);
     }
   }
 
@@ -155,10 +225,6 @@ export class WallyConnector {
 
   private getAuthToken(): string | null {
     return localStorage.getItem(`wally:${this.clientId}:token`);
-  }
-
-  private static setAuthToken(clientId: string, authToken: string): void {
-    localStorage.setItem(`wally:${clientId}:token`, authToken);
   }
 
   private generateStateCode(length = 10) {
@@ -184,19 +250,11 @@ export class WallyConnector {
   }
 
   private getState(): string | null {
-    return WallyConnector.getState(this.clientId);
+    return localStorage.getItem(`wally:${this.clientId}:state:token`);
   }
 
   private deleteState() {
-    WallyConnector.deleteState(this.clientId);
-  }
-
-  private static getState(clientId: string): string | null {
-    return localStorage.getItem(`wally:${clientId}:state:token`);
-  }
-
-  private static deleteState(clientId: string) {
-    localStorage.removeItem(`wally:${clientId}:state:token`);
+    localStorage.removeItem(`wally:${this.clientId}:state:token`);
   }
 
   async request(req: RequestObj): Promise<any> {
@@ -288,3 +346,6 @@ export class WallyConnector {
     return body;
   }
 }
+
+// eslint-disable-next-line no-var
+var wally: WallyConnector = window.wally || new WallyConnector();

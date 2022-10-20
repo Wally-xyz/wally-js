@@ -8,8 +8,10 @@
   "scripts": {
     "build": "./node_modules/.bin/tsc --project .",
     "watch": "./node_modules/.bin/tsc --watch --project .",
-    "build:test_page": "./node_modules/.bin/tsc --project . --outDir test_page/public/sdk/dist",
-    "build:test_page:watch": "./node_modules/.bin/tsc --watch --project . --outDir test_page/public/sdk/dist",
+    "build:test_page": "./node_modules/.bin/tsc --project . --outFile test_page/public/sdk/dist/index.js",
+    "build:test_page:watch": "./node_modules/.bin/tsc --watch --project . --outFile test_page/public/sdk/dist/index.js",
+    "build:demo": "./node_modules/.bin/tsc --project . --outFile demo/public/sdk/index.js",
+    "build:demo:watch": "./node_modules/.bin/tsc --watch --project . --outFile demo/public/sdk/index.js",
     "build:clean": "rimraf dist && yarn build",
     "lint": "eslint . --cache --ext js,ts,jsx,tsx",
     "lint:fix": "yarn lint --fix",

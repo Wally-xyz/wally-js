@@ -2,8 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { MetaMaskInpageProvider } from '@metamask/providers';
 
-import { WallyConnector } from '../../dist';
-
 import Connect from 'components/connect';
 import Sign from 'components/sign';
 
@@ -16,11 +14,7 @@ const Home: React.FC = () => {
 
   const detectProvider = useCallback(() => {
     if (isUsingWally) {
-      return Promise.resolve(
-        new WallyConnector(process.env.NEXT_PUBLIC_CLIENT_ID, {
-          isDevelopment: process.env.NEXT_PUBLIC_IS_DEVELOPMENT === 'true',
-        })
-      );
+      return Promise.resolve(window.wally);
     } else {
       return detectEthereumProvider();
     }
