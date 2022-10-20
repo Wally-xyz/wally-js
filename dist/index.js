@@ -1,6 +1,11 @@
 "use strict";
 /**
- * Everything is in a single file for the mo
+ * TODO: Everything is in a single file for the moment so that typescript
+ * builds a single script file that can access the global window scope.
+ * Otherwise, it builds a module that needs importing.
+ *
+ * I'll figure out how to clean this up later if it's the direction we
+ * decide to go.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -17,6 +22,9 @@ var MethodName;
     MethodName["personal_sign"] = "personal_sign";
     MethodName["eth_getBalance"] = "eth_getBalance";
 })(MethodName || (MethodName = {}));
+/**
+ * ------ CONSTANTS --------
+ */
 const APP_ROOT = 'https://api.wally.xyz/';
 const getScrimElement = () => {
     const scrim = document.createElement('div');
@@ -25,8 +33,25 @@ const getScrimElement = () => {
     scrim.style.left = '0';
     scrim.style.width = '100%';
     scrim.style.height = '100%';
-    scrim.style.background = 'grey';
-    scrim.style.opacity = '0.6';
+    scrim.style.background = '#9995';
+    const text = document.createElement('div');
+    text.innerText = 'Logging in to Wally...';
+    text.style.position = 'absolute';
+    text.style.width = '256px';
+    text.style.height = '128px';
+    text.style.background = '#CCC';
+    text.style.color = '#222';
+    text.style.fontWeight = 'bold';
+    text.style.textAlign = 'center';
+    text.style.paddingTop = '48px';
+    text.style.margin = 'auto';
+    text.style.top = '0';
+    text.style.left = '0';
+    text.style.right = '0';
+    text.style.bottom = '0';
+    text.style.borderRadius = '5px';
+    text.style.boxShadow = '0px 3px 24px 3px #222c';
+    scrim.appendChild(text);
     return scrim;
 };
 const getRedirectPage = () => {
@@ -49,6 +74,9 @@ const getRedirectPage = () => {
     containerEl.appendChild(caption);
     return containerEl;
 };
+/**
+ * ------ MAIN --------
+ */
 class WallyConnector {
     constructor() {
         this.clientId = null;
@@ -77,7 +105,6 @@ class WallyConnector {
             document.body.appendChild(scrim);
             return new Promise((resolve) => {
                 window.addEventListener('storage', (e) => {
-                    console.log('storage', { e });
                     if (!this.getAuthToken()) {
                         return;
                     }
@@ -260,5 +287,6 @@ class WallyConnector {
         });
     }
 }
+// eslint-disable-next-line no-var
 var wally = window.wally || new WallyConnector();
 //# sourceMappingURL=index.js.map

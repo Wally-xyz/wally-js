@@ -1,5 +1,13 @@
 /**
- * Everything is in a single file for the mo
+ * TODO: Everything is in a single file for the moment so that typescript
+ * builds a single script file that can access the global window scope.
+ * Otherwise, it builds a module that needs importing.
+ *
+ * I'll figure out how to clean this up later if it's the direction we
+ * decide to go.
+ */
+/**
+ * ------ TYPES --------
  */
 declare type SignedMessage = {
     address: string;
@@ -23,9 +31,15 @@ declare enum MethodName {
     'personal_sign' = "personal_sign",
     'eth_getBalance' = "eth_getBalance"
 }
+/**
+ * ------ CONSTANTS --------
+ */
 declare const APP_ROOT = "https://api.wally.xyz/";
 declare const getScrimElement: () => HTMLElement;
 declare const getRedirectPage: () => HTMLElement;
+/**
+ * ------ MAIN --------
+ */
 declare class WallyConnector {
     private clientId;
     private host;
