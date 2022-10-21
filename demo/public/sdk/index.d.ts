@@ -29,6 +29,7 @@ interface RequestObj {
 declare enum MethodName {
     'eth_requestAccounts' = "eth_requestAccounts",
     'personal_sign' = "personal_sign",
+    'eth_sign' = "eth_sign",
     'eth_getBalance' = "eth_getBalance"
 }
 /**

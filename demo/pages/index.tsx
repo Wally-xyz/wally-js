@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { MetaMaskInpageProvider } from '@metamask/providers';
 
+import Web3 from 'web3';
+
 import Connect from 'components/connect';
 import Sign from 'components/sign';
 
@@ -11,6 +13,7 @@ const Home: React.FC = () => {
   const [isUsingWally, setIsUsingWally] = useState(true);
   const [provider, setProvider] = useState<MetaMaskInpageProvider | any>(null);
   const [address, setAddress] = useState(null);
+  const [web3, setWeb3] = useState(null);
 
   const detectProvider = useCallback(() => {
     if (isUsingWally) {
@@ -23,7 +26,9 @@ const Home: React.FC = () => {
   useEffect(() => {
     detectProvider().then((p) => {
       if (p) {
-        setProvider(p as MetaMaskInpageProvider);
+        setProvider(p);
+        const web3 = new Web3(p);
+        setWeb3(web3);
       }
     });
   }, [isUsingWally]);
@@ -65,9 +70,14 @@ const Home: React.FC = () => {
       </span>
       <br />
       {address ? (
-        <Sign provider={provider} address={address} />
+        <Sign
+          isUsingWally={isUsingWally}
+          provider={provider}
+          address={address}
+          web3={web3}
+        />
       ) : (
-        <Connect provider={provider} setAddress={setAddress} />
+        <Connect setAddress={setAddress} web3={web3} />
       )}
     </>
   );
