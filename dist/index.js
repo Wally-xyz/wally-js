@@ -1,4 +1,12 @@
 "use strict";
+/**
+ * TODO: Everything is in a single file for the moment so that typescript
+ * builds a single script file that can access the global window scope.
+ * Otherwise, it builds a module that needs importing.
+ *
+ * I'll figure out how to clean this up later if it's the direction we
+ * decide to go.
+ */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,32 +16,103 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WallyConnector = void 0;
 var MethodName;
 (function (MethodName) {
     MethodName["eth_requestAccounts"] = "eth_requestAccounts";
     MethodName["personal_sign"] = "personal_sign";
     MethodName["eth_getBalance"] = "eth_getBalance";
 })(MethodName || (MethodName = {}));
+/**
+ * ------ CONSTANTS --------
+ */
+const APP_ROOT = 'https://api.wally.xyz/';
+const getScrimElement = () => {
+    const scrim = document.createElement('div');
+    scrim.style.position = 'absolute';
+    scrim.style.top = '0';
+    scrim.style.left = '0';
+    scrim.style.width = '100%';
+    scrim.style.height = '100%';
+    scrim.style.background = '#9995';
+    const text = document.createElement('div');
+    text.innerText = 'Logging in to Wally...';
+    text.style.position = 'absolute';
+    text.style.width = '256px';
+    text.style.height = '128px';
+    text.style.background = '#CCC';
+    text.style.color = '#222';
+    text.style.fontWeight = 'bold';
+    text.style.textAlign = 'center';
+    text.style.paddingTop = '48px';
+    text.style.margin = 'auto';
+    text.style.top = '0';
+    text.style.left = '0';
+    text.style.right = '0';
+    text.style.bottom = '0';
+    text.style.borderRadius = '5px';
+    text.style.boxShadow = '0px 3px 24px 3px #222c';
+    scrim.appendChild(text);
+    return scrim;
+};
+const getRedirectPage = () => {
+    const containerEl = document.createElement('div');
+    containerEl.style.position = 'absolute';
+    containerEl.style.top = '50%';
+    containerEl.style.left = '50%';
+    containerEl.style.transform = 'translate(-50%, -50%)';
+    containerEl.style.textAlign = 'center';
+    const el = document.createElement('h1');
+    el.innerText = 'Logged In To Wally!';
+    const img = document.createElement('img');
+    img.src = '/logo.gif';
+    img.width = 150;
+    const caption = document.createElement('p');
+    caption.innerText = 'Redirecting...';
+    caption.style.fontStyle = 'italic';
+    containerEl.appendChild(el);
+    containerEl.appendChild(img);
+    containerEl.appendChild(caption);
+    return containerEl;
+};
+/**
+ * ------ MAIN --------
+ */
 class WallyConnector {
-    constructor(clientId, options) {
-        var _a;
-        this.clientId = clientId;
-        this.options = options;
-        this.host = ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment)
-            ? 'http://localhost:8888/v1'
-            : 'https://api.wally.xyz';
+    constructor() {
+        this.clientId = null;
+        this.host = null;
         this.selectedAddress = null;
+        this.isDevelopment = false;
+        this.didHandleRedirect = false;
+    }
+    init({ clientId, isDevelopment = false, devUrl = '', }) {
+        this.clientId = clientId;
+        this.isDevelopment = isDevelopment;
+        this.host = isDevelopment
+            ? devUrl
+            : APP_ROOT;
     }
     loginWithEmail() {
-        var _a;
-        const state = this.generateStateCode();
-        this.saveState(state);
-        const queryParams = new URLSearchParams({ clientId: this.clientId, state });
-        window.location.replace(((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment)
-            ? `${this.host}/oauth/otp?${queryParams.toString()}`
-            : `${this.host}/oauth/otp?${queryParams.toString()}`);
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.clientId) {
+                return;
+            }
+            const state = this.generateStateCode();
+            this.saveState(state);
+            const queryParams = new URLSearchParams({ clientId: this.clientId, state });
+            window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');
+            const scrim = getScrimElement();
+            document.body.appendChild(scrim);
+            return new Promise((resolve) => {
+                window.addEventListener('storage', (e) => {
+                    if (!this.getAuthToken()) {
+                        return;
+                    }
+                    resolve();
+                    document.body.removeChild(scrim);
+                });
+            });
+        });
     }
     isRedirected() {
         return this.getState() !== null;
@@ -41,14 +120,20 @@ class WallyConnector {
     isLoggedIn() {
         return !!this.getAuthToken();
     }
-    handleRedirect() {
-        var _a;
+    handleRedirect({ closeWindow = false, appendContent = false, }) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.didHandleRedirect) {
+                return;
+            }
+            this.didHandleRedirect = true;
+            if (appendContent) {
+                document.body.appendChild(getRedirectPage());
+            }
             const storedState = this.getState();
             const queryParams = new URLSearchParams(window.location.search);
             if (storedState && storedState !== queryParams.get('state')) {
                 this.deleteState();
-                if ((_a = this.options) === null || _a === void 0 ? void 0 : _a.isDevelopment) {
+                if (this.isDevelopment) {
                     console.error('Invalid Wally state');
                 }
             }
@@ -78,6 +163,9 @@ class WallyConnector {
             catch (err) {
                 console.error(`Unable to fetch Wally access token: ${err}`);
                 this.deleteState();
+            }
+            if (closeWindow) {
+                window.setTimeout(window.close, 1000);
             }
         });
     }
@@ -114,20 +202,21 @@ class WallyConnector {
     }
     request(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('requesting!', { req });
+            if (!this.isLoggedIn()) {
+                yield this.loginWithEmail();
+            }
             switch (req.method) {
                 case 'eth_requestAccounts':
                     return this.requestAccounts();
                 case 'personal_sign':
                     return this.signMessage(req.params);
                 case MethodName.eth_getBalance:
-                    return Promise.resolve('4200000000');
+                    return this._request(req.method, req.params);
             }
         });
     }
     requestAccounts() {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('token:', this.getAuthToken());
             let resp;
             try {
                 resp = yield fetch(`${this.host}/oauth/me`, {
@@ -158,11 +247,10 @@ class WallyConnector {
                 headers: {
                     Authorization: `Bearer ${this.getAuthToken()}`,
                     'Content-Type': 'application/json',
-                    // Accept: 'application/json',
                 },
                 body: JSON.stringify({
                     message: params[1],
-                })
+                }),
             });
             if (!resp.ok || resp.status >= 300) {
                 throw new Error('Wally server returned a non-successful response when signing a message');
@@ -171,6 +259,34 @@ class WallyConnector {
             return json.signature;
         });
     }
+    /**
+     * Handle other non-wally-specific methods - forwards to ethers/alchemy
+     * on the backend
+     * @param method The RPC Method
+     * @param params Arbitrary array of params
+     * @returns whatever you want it to
+     */
+    _request(method, params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const resp = yield fetch(`${this.host}/oauth/wallet/send`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${this.getAuthToken()}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    method,
+                    params,
+                }),
+            });
+            if (!resp.ok || resp.status >= 300) {
+                throw new Error('Wally server returned a non-successful response when signing a message');
+            }
+            const body = yield resp.text();
+            return body;
+        });
+    }
 }
-exports.WallyConnector = WallyConnector;
+// eslint-disable-next-line no-var
+var wally = window.wally || new WallyConnector();
 //# sourceMappingURL=index.js.map
