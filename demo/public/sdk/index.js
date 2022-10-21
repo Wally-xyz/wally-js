@@ -44,6 +44,7 @@ var MethodName;
 (function (MethodName) {
   MethodName['eth_requestAccounts'] = 'eth_requestAccounts';
   MethodName['personal_sign'] = 'personal_sign';
+  MethodName['eth_sign'] = 'eth_sign';
   MethodName['eth_getBalance'] = 'eth_getBalance';
 })(MethodName || (MethodName = {}));
 /**
@@ -237,7 +238,9 @@ class WallyConnector {
       switch (req.method) {
         case 'eth_requestAccounts':
           return this.requestAccounts();
+        // TODO: figure out which name to use
         case 'personal_sign':
+        case 'eth_sign':
           return this.signMessage(req.params);
         case MethodName.eth_getBalance:
           return this._request(req.method, req.params);

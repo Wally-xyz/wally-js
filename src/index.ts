@@ -35,6 +35,7 @@ interface RequestObj {
 enum MethodName {
   'eth_requestAccounts' = 'eth_requestAccounts',
   'personal_sign' = 'personal_sign',
+  'eth_sign' = 'eth_sign',
   'eth_getBalance' = 'eth_getBalance',
 }
 
@@ -265,7 +266,9 @@ class WallyConnector {
     switch (req.method) {
       case 'eth_requestAccounts':
         return this.requestAccounts();
+      // TODO: figure out which name to use
       case 'personal_sign':
+      case 'eth_sign':
         return this.signMessage(req.params);
       case MethodName.eth_getBalance:
         return this._request(req.method, req.params);
