@@ -1,8 +1,10 @@
 import React from 'react';
 
+import { handleRedirect } from 'wally';
+
 const HandleRedirect: React.FC = () => {
   if (typeof window !== 'undefined') {
-    window.wally.handleRedirect({
+    handleRedirect({
       closeWindow: true,
       appendContent: true,
     });

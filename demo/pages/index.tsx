@@ -9,6 +9,8 @@ import Sign from 'components/sign';
 
 import styles from 'styles/Home.module.css';
 
+import { getProvider } from 'wally';
+
 const Home: React.FC = () => {
   const [isUsingWally, setIsUsingWally] = useState(true);
   const [provider, setProvider] = useState<MetaMaskInpageProvider | any>(null);
@@ -17,7 +19,7 @@ const Home: React.FC = () => {
 
   const detectProvider = useCallback(() => {
     if (isUsingWally) {
-      return Promise.resolve(window.wally);
+      return Promise.resolve(getProvider());
     } else {
       return detectEthereumProvider();
     }

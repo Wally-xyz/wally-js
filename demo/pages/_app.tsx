@@ -2,6 +2,8 @@ import React from 'react';
 import Layout from 'components/layout';
 import 'styles/globals.css';
 
+import { init } from 'wally';
+
 interface LayoutProps {
   Component: React.JSXElementConstructor<any>;
   pageProps: any;
@@ -9,7 +11,7 @@ interface LayoutProps {
 
 const MyApp: React.FC<LayoutProps> = ({ Component, pageProps }) => {
   if (typeof window !== 'undefined') {
-    window.wally.init({
+    init({
       clientId: process.env.NEXT_PUBLIC_CLIENT_ID,
       isDevelopment: true,
       devUrl: process.env.NEXT_PUBLIC_DEV_URL,
