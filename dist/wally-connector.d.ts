@@ -5,7 +5,12 @@ declare class WallyConnector {
     private isDevelopment;
     selectedAddress: string | null;
     private didHandleRedirect;
-    constructor({ clientId, isDevelopment, devUrl, }: WallyConnectorOptions);
+    private worker;
+    private workerCallbacks;
+    constructor({ clientId, isDevelopment, devUrl }: WallyConnectorOptions);
+    private connectToSharedWorker;
+    private handleWorkerMessage;
+    private onWorkerMessage;
     loginWithEmail(): Promise<void>;
     isRedirected(): boolean;
     isLoggedIn(): boolean;

@@ -4,13 +4,10 @@ import {
   RequestObj,
   MethodName,
   SignedMessage,
+  WorkerMessage,
 } from './types';
 
-import {
-  APP_ROOT,
-  getRedirectPage,
-  getScrimElement,
-} from './constants';
+import { APP_ROOT, getRedirectPage, getScrimElement } from './constants';
 
 class WallyConnector {
   private clientId: string | null;
@@ -18,17 +15,38 @@ class WallyConnector {
   private isDevelopment: boolean;
   public selectedAddress: string | null;
   private didHandleRedirect: boolean;
+  private worker: SharedWorker;
+  private workerCallbacks: Partial<Record<WorkerMessage, Array<() => void>>>;
 
-  constructor({
-    clientId,
-    isDevelopment,
-    devUrl,
-  }: WallyConnectorOptions) {
+  constructor({ clientId, isDevelopment, devUrl }: WallyConnectorOptions) {
     this.clientId = clientId;
-    this.host = isDevelopment && devUrl || APP_ROOT;
+    this.host = (isDevelopment && devUrl) || APP_ROOT;
     this.selectedAddress = null;
     this.isDevelopment = !!isDevelopment;
     this.didHandleRedirect = false;
+
+    // todo - make path configurable, node_modules maybe?
+    this.worker = new SharedWorker('/sdk/worker.js');
+    this.connectToSharedWorker();
+    this.workerCallbacks = {};
+  }
+
+  private connectToSharedWorker(): void {
+    this.worker.port.start();
+    this.worker.port.onmessage = (e: MessageEvent) => {
+      this.handleWorkerMessage(e.data);
+    }
+  }
+
+  private handleWorkerMessage(message: WorkerMessage): void {
+    this.workerCallbacks[message]?.forEach((cb) => cb());
+  }
+
+  private onWorkerMessage(message: WorkerMessage, fn: () => void) {
+    if (!this.workerCallbacks[message]) {
+      this.workerCallbacks[message] = [];
+    }
+    this.workerCallbacks[message]?.push(fn);
   }
 
   public async loginWithEmail(): Promise<void> {
@@ -45,7 +63,7 @@ class WallyConnector {
     document.body.appendChild(scrim);
 
     return new Promise((resolve) => {
-      window.addEventListener('storage', () => {
+      this.onWorkerMessage(WorkerMessage.LOGIN_SUCCESS, () => {
         if (!this.getAuthToken()) {
           return;
         }
@@ -102,6 +120,7 @@ class WallyConnector {
       if (resp && resp?.ok && resp?.status < 300) {
         const data = await resp.json();
         this.setAuthToken(data.token);
+        this.worker.port.postMessage(WorkerMessage.LOGIN_SUCCESS);
       } else {
         this.deleteState();
         console.error(
@@ -162,13 +181,13 @@ class WallyConnector {
     }
 
     switch (req.method) {
-      case 'eth_requestAccounts':
+      case MethodName.REQUEST_ACCOUNTS:
         return this.requestAccounts();
       // TODO: figure out which name to use
-      case 'personal_sign':
-      case 'eth_sign':
+      case MethodName.PERSONAL_SIGN:
+      case MethodName.SIGN:
         return this.signMessage(req.params);
-      case MethodName.eth_getBalance:
+      case MethodName.GET_BALANCE:
         return this._request(req.method, req.params);
     }
   }
