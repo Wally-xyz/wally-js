@@ -19,11 +19,15 @@ class WallyConnector {
         this.isDevelopment = !!isDevelopment;
         this.didHandleRedirect = false;
         // todo - make path configurable, node_modules maybe?
-        this.worker = new SharedWorker('/sdk/worker.js');
+        this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
         this.connectToSharedWorker();
         this.workerCallbacks = {};
     }
     connectToSharedWorker() {
+        if (!this.worker) {
+            console.error('SharedWorker not available, falling back to less-than-ideal experience.');
+            return;
+        }
         this.worker.port.start();
         this.worker.port.onmessage = (e) => {
             this.handleWorkerMessage(e.data);
@@ -31,10 +35,16 @@ class WallyConnector {
     }
     handleWorkerMessage(message) {
         var _a;
+        if (!this.worker) {
+            return;
+        }
         (_a = this.workerCallbacks[message]) === null || _a === void 0 ? void 0 : _a.forEach((cb) => cb());
     }
     onWorkerMessage(message, fn) {
         var _a;
+        if (!this.worker) {
+            return;
+        }
         if (!this.workerCallbacks[message]) {
             this.workerCallbacks[message] = [];
         }
@@ -51,13 +61,26 @@ class WallyConnector {
             window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');
             const scrim = (0, constants_1.getScrimElement)();
             document.body.appendChild(scrim);
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
+                const updateFailureScrim = () => {
+                    const scrimText = document.getElementById(constants_1.SCRIM_TEXT_ID);
+                    scrimText
+                        ? (scrimText.innerText =
+                            'Error logging in. ☹️\nPlease refresh and try again.')
+                        : {};
+                };
                 this.onWorkerMessage(types_1.WorkerMessage.LOGIN_SUCCESS, () => {
                     if (!this.getAuthToken()) {
+                        updateFailureScrim();
+                        reject();
                         return;
                     }
                     resolve();
                     document.body.removeChild(scrim);
+                });
+                this.onWorkerMessage(types_1.WorkerMessage.LOGIN_FAILURE, () => {
+                    updateFailureScrim();
+                    reject();
                 });
             });
         });
@@ -102,18 +125,33 @@ class WallyConnector {
                 if (resp && (resp === null || resp === void 0 ? void 0 : resp.ok) && (resp === null || resp === void 0 ? void 0 : resp.status) < 300) {
                     const data = yield resp.json();
                     this.setAuthToken(data.token);
-                    this.worker.port.postMessage(types_1.WorkerMessage.LOGIN_SUCCESS);
+                    if (this.worker) {
+                        this.worker.port.postMessage(types_1.WorkerMessage.LOGIN_SUCCESS);
+                    }
+                    else {
+                        const caption = document.getElementById(constants_1.REDIRECT_CAPTION_ID);
+                        caption
+                            ? (caption.innerText =
+                                'Success. You may now close this page and refresh the app.')
+                            : {};
+                    }
                 }
                 else {
                     this.deleteState();
                     console.error('The Wally server returned a non-successful response when exchanging authorization code for token');
+                    this.worker
+                        ? this.worker.port.postMessage(types_1.WorkerMessage.LOGIN_FAILURE)
+                        : {};
                 }
             }
             catch (err) {
                 console.error(`Unable to fetch Wally access token: ${err}`);
                 this.deleteState();
+                this.worker
+                    ? this.worker.port.postMessage(types_1.WorkerMessage.LOGIN_FAILURE)
+                    : {};
             }
-            if (closeWindow) {
+            if (closeWindow && this.worker) {
                 window.setTimeout(window.close, 1000);
             }
         });

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import Web3 from 'web3';
 
 interface ConnectProps {
@@ -11,13 +11,28 @@ const Connect: React.FC<ConnectProps> = ({ setAddress, web3 }) => {
     return null;
   }
 
+  const [err, setErr] = useState(null);
+
   const onClick = useCallback(() => {
-    web3.eth.requestAccounts().then((res) => {
-      setAddress(res[0]);
-    });
+    web3.eth.requestAccounts().then(
+      (res) => {
+        setAddress(res[0]);
+      },
+      (err) => {
+        console.error(err);
+        setErr(err);
+      }
+    );
   }, [setAddress, web3]);
 
-  return <button onClick={onClick}>Connect</button>;
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <button onClick={onClick}>Request Account</button>
+      {err ? (
+        <p style={{ color: 'orangered' }}>Error fetching account</p>
+      ) : null}
+    </div>
+  );
 };
 
 export default Connect;

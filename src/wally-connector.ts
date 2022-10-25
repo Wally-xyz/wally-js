@@ -7,7 +7,13 @@ import {
   WorkerMessage,
 } from './types';
 
-import { APP_ROOT, getRedirectPage, getScrimElement } from './constants';
+import {
+  APP_ROOT,
+  REDIRECT_CAPTION_ID,
+  SCRIM_TEXT_ID,
+  getRedirectPage,
+  getScrimElement,
+} from './constants';
 
 class WallyConnector {
   private clientId: string | null;
@@ -15,7 +21,7 @@ class WallyConnector {
   private isDevelopment: boolean;
   public selectedAddress: string | null;
   private didHandleRedirect: boolean;
-  private worker: SharedWorker;
+  private worker: SharedWorker | null;
   private workerCallbacks: Partial<Record<WorkerMessage, Array<() => void>>>;
 
   constructor({ clientId, isDevelopment, devUrl }: WallyConnectorOptions) {
@@ -26,23 +32,36 @@ class WallyConnector {
     this.didHandleRedirect = false;
 
     // todo - make path configurable, node_modules maybe?
-    this.worker = new SharedWorker('/sdk/worker.js');
+    this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
     this.connectToSharedWorker();
     this.workerCallbacks = {};
   }
 
   private connectToSharedWorker(): void {
+    if (!this.worker) {
+      console.error(
+        'SharedWorker not available, falling back to less-than-ideal experience.'
+      );
+      return;
+    }
+
     this.worker.port.start();
     this.worker.port.onmessage = (e: MessageEvent) => {
       this.handleWorkerMessage(e.data);
-    }
+    };
   }
 
   private handleWorkerMessage(message: WorkerMessage): void {
+    if (!this.worker) {
+      return;
+    }
     this.workerCallbacks[message]?.forEach((cb) => cb());
   }
 
   private onWorkerMessage(message: WorkerMessage, fn: () => void) {
+    if (!this.worker) {
+      return;
+    }
     if (!this.workerCallbacks[message]) {
       this.workerCallbacks[message] = [];
     }
@@ -62,13 +81,27 @@ class WallyConnector {
     const scrim = getScrimElement();
     document.body.appendChild(scrim);
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      const updateFailureScrim = () => {
+        const scrimText = document.getElementById(SCRIM_TEXT_ID);
+        scrimText
+          ? (scrimText.innerText =
+              'Error logging in. ☹️\nPlease refresh and try again.')
+          : {};
+      };
+
       this.onWorkerMessage(WorkerMessage.LOGIN_SUCCESS, () => {
         if (!this.getAuthToken()) {
+          updateFailureScrim();
+          reject();
           return;
         }
         resolve();
         document.body.removeChild(scrim);
+      });
+      this.onWorkerMessage(WorkerMessage.LOGIN_FAILURE, () => {
+        updateFailureScrim();
+        reject();
       });
     });
   }
@@ -120,19 +153,33 @@ class WallyConnector {
       if (resp && resp?.ok && resp?.status < 300) {
         const data = await resp.json();
         this.setAuthToken(data.token);
-        this.worker.port.postMessage(WorkerMessage.LOGIN_SUCCESS);
+        if (this.worker) {
+          this.worker.port.postMessage(WorkerMessage.LOGIN_SUCCESS);
+        } else {
+          const caption = document.getElementById(REDIRECT_CAPTION_ID);
+          caption
+            ? (caption.innerText =
+                'Success. You may now close this page and refresh the app.')
+            : {};
+        }
       } else {
         this.deleteState();
         console.error(
           'The Wally server returned a non-successful response when exchanging authorization code for token'
         );
+        this.worker
+          ? this.worker.port.postMessage(WorkerMessage.LOGIN_FAILURE)
+          : {};
       }
     } catch (err) {
       console.error(`Unable to fetch Wally access token: ${err}`);
       this.deleteState();
+      this.worker
+        ? this.worker.port.postMessage(WorkerMessage.LOGIN_FAILURE)
+        : {};
     }
 
-    if (closeWindow) {
+    if (closeWindow && this.worker) {
       window.setTimeout(window.close, 1000);
     }
   }

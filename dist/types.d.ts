@@ -22,5 +22,6 @@ export declare enum MethodName {
     GET_BALANCE = "eth_getBalance"
 }
 export declare enum WorkerMessage {
-    LOGIN_SUCCESS = "login-success"
+    LOGIN_SUCCESS = "login-success",
+    LOGIN_FAILURE = "login-failure"
 }

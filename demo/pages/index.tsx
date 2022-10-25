@@ -36,10 +36,10 @@ const Home: React.FC = () => {
   }, [isUsingWally]);
 
   useEffect(() => {
-    if (provider && provider.selectedAddress) {
-      setAddress(provider.selectedAddress);
+    if (provider && provider.selectedAddress && setAddress) {
+      setAddress(provider.selectedAddress || null);
     }
-  }, [provider]);
+  }, [provider, setAddress]);
 
   const onChange = (e) => {
     setIsUsingWally(e.target.value === 'wally');

@@ -28,4 +28,5 @@ export enum MethodName {
 
 export enum WorkerMessage {
   LOGIN_SUCCESS = 'login-success',
+  LOGIN_FAILURE = 'login-failure',
 }
