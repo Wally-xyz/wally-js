@@ -12,12 +12,33 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const types_1 = require("./types");
 const constants_1 = require("./constants");
 class WallyConnector {
-    constructor({ clientId, isDevelopment, devUrl, }) {
+    constructor({ clientId, isDevelopment, devUrl }) {
         this.clientId = clientId;
-        this.host = isDevelopment && devUrl || constants_1.APP_ROOT;
+        this.host = (isDevelopment && devUrl) || constants_1.APP_ROOT;
         this.selectedAddress = null;
         this.isDevelopment = !!isDevelopment;
         this.didHandleRedirect = false;
+        // todo - make path configurable, node_modules maybe?
+        this.worker = new SharedWorker('/sdk/worker.js');
+        this.connectToSharedWorker();
+        this.workerCallbacks = {};
+    }
+    connectToSharedWorker() {
+        this.worker.port.start();
+        this.worker.port.onmessage = (e) => {
+            this.handleWorkerMessage(e.data);
+        };
+    }
+    handleWorkerMessage(message) {
+        var _a;
+        (_a = this.workerCallbacks[message]) === null || _a === void 0 ? void 0 : _a.forEach((cb) => cb());
+    }
+    onWorkerMessage(message, fn) {
+        var _a;
+        if (!this.workerCallbacks[message]) {
+            this.workerCallbacks[message] = [];
+        }
+        (_a = this.workerCallbacks[message]) === null || _a === void 0 ? void 0 : _a.push(fn);
     }
     loginWithEmail() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -31,7 +52,7 @@ class WallyConnector {
             const scrim = (0, constants_1.getScrimElement)();
             document.body.appendChild(scrim);
             return new Promise((resolve) => {
-                window.addEventListener('storage', (e) => {
+                this.onWorkerMessage(types_1.WorkerMessage.LOGIN_SUCCESS, () => {
                     if (!this.getAuthToken()) {
                         return;
                     }
@@ -81,6 +102,7 @@ class WallyConnector {
                 if (resp && (resp === null || resp === void 0 ? void 0 : resp.ok) && (resp === null || resp === void 0 ? void 0 : resp.status) < 300) {
                     const data = yield resp.json();
                     this.setAuthToken(data.token);
+                    this.worker.port.postMessage(types_1.WorkerMessage.LOGIN_SUCCESS);
                 }
                 else {
                     this.deleteState();
@@ -133,13 +155,13 @@ class WallyConnector {
                 yield this.loginWithEmail();
             }
             switch (req.method) {
-                case 'eth_requestAccounts':
+                case types_1.MethodName.REQUEST_ACCOUNTS:
                     return this.requestAccounts();
                 // TODO: figure out which name to use
-                case 'personal_sign':
-                case 'eth_sign':
+                case types_1.MethodName.PERSONAL_SIGN:
+                case types_1.MethodName.SIGN:
                     return this.signMessage(req.params);
-                case types_1.MethodName.eth_getBalance:
+                case types_1.MethodName.GET_BALANCE:
                     return this._request(req.method, req.params);
             }
         });
@@ -157,7 +179,7 @@ class WallyConnector {
                 if (resp && (resp === null || resp === void 0 ? void 0 : resp.ok) && (resp === null || resp === void 0 ? void 0 : resp.status) < 300) {
                     const data = yield resp.json();
                     this.selectedAddress = data.address;
-                    return [this.selectedAddress];
+                    return [this.selectedAddress || ''];
                 }
                 else {
                     console.error('The Wally server returned a non-successful response when fetching wallet details');

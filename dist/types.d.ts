@@ -16,8 +16,11 @@ export interface RequestObj {
     params: any;
 }
 export declare enum MethodName {
-    'eth_requestAccounts' = "eth_requestAccounts",
-    'personal_sign' = "personal_sign",
-    'eth_sign' = "eth_sign",
-    'eth_getBalance' = "eth_getBalance"
+    REQUEST_ACCOUNTS = "eth_requestAccounts",
+    PERSONAL_SIGN = "personal_sign",
+    SIGN = "eth_sign",
+    GET_BALANCE = "eth_getBalance"
+}
+export declare enum WorkerMessage {
+    LOGIN_SUCCESS = "login-success"
 }
