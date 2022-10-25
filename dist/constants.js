@@ -1,7 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRedirectPage = exports.getScrimElement = exports.APP_ROOT = void 0;
+exports.getRedirectPage = exports.getScrimElement = exports.SCRIM_TEXT_ID = exports.REDIRECT_CAPTION_ID = exports.APP_ROOT = void 0;
 exports.APP_ROOT = 'https://api.wally.xyz/';
+exports.REDIRECT_CAPTION_ID = 'wally-redirect-caption';
+exports.SCRIM_TEXT_ID = 'wally-scrim-text';
 const getScrimElement = () => {
     const scrim = document.createElement('div');
     scrim.style.position = 'absolute';
@@ -11,6 +13,7 @@ const getScrimElement = () => {
     scrim.style.height = '100%';
     scrim.style.background = '#9995';
     const text = document.createElement('div');
+    text.id = exports.SCRIM_TEXT_ID;
     text.innerText = 'Logging in to Wally...';
     text.style.position = 'absolute';
     text.style.width = '256px';
@@ -39,12 +42,13 @@ const getRedirectPage = () => {
     containerEl.style.transform = 'translate(-50%, -50%)';
     containerEl.style.textAlign = 'center';
     const el = document.createElement('h1');
-    el.innerText = 'Logged In To Wally!';
+    el.innerText = 'Logging In To Wally';
     const img = document.createElement('img');
     img.src = '/logo.gif';
     img.width = 150;
     const caption = document.createElement('p');
-    caption.innerText = 'Redirecting...';
+    caption.id = exports.REDIRECT_CAPTION_ID;
+    caption.innerText = 'Fetching token...';
     caption.style.fontStyle = 'italic';
     containerEl.appendChild(el);
     containerEl.appendChild(img);

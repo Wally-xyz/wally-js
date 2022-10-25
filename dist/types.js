@@ -11,5 +11,6 @@ var MethodName;
 var WorkerMessage;
 (function (WorkerMessage) {
     WorkerMessage["LOGIN_SUCCESS"] = "login-success";
+    WorkerMessage["LOGIN_FAILURE"] = "login-failure";
 })(WorkerMessage = exports.WorkerMessage || (exports.WorkerMessage = {}));
 //# sourceMappingURL=types.js.map
