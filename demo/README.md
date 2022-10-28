@@ -16,4 +16,4 @@ Make sure you have the MetaMask extension installed, and the `wally-api` running
 
 ## wallet-connector updates
 
-If you make changes to the `wallet-connector`, make sure you run `npm run build` in the top level project directory to build that package.
+If you make changes to the `wallet-connector`, make sure you run `npm run build:demo` or `npm run build:demo:watch` in the top level project directory to build that package.
