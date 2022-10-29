@@ -1,9 +1,12 @@
+import io, { Socket } from 'socket.io-client';
+
 import {
-  WallyConnectorOptions,
+  MethodName,
   RedirectOptions,
   RequestObj,
-  MethodName,
+  RpcEvent,
   SignedMessage,
+  WallyConnectorOptions,
   WorkerMessage,
 } from './types';
 
@@ -17,24 +20,56 @@ import {
 
 class WallyConnector {
   private clientId: string | null;
-  private host: string | null;
+  private host: string;
   private isDevelopment: boolean;
-  public selectedAddress: string | null;
-  private didHandleRedirect: boolean;
+  public selectedAddress: string | null = null;
+  private didHandleRedirect = false;
   private worker: SharedWorker | null;
-  private workerCallbacks: Partial<Record<WorkerMessage, Array<() => void>>>;
+  private workerCallbacks: Partial<Record<WorkerMessage, Array<() => void>>> =
+    {};
+  private socket: Socket | null = null;
+  private socketIsConnected = false;
+  private rpcEventListeners: Record<string, Array<(a: any) => void>> = {};
+  private pendingRpcEvents: Set<string> = new Set();
+  private isConectingToSocket = false;
 
   constructor({ clientId, isDevelopment, devUrl }: WallyConnectorOptions) {
     this.clientId = clientId;
     this.host = (isDevelopment && devUrl) || APP_ROOT;
     this.selectedAddress = null;
     this.isDevelopment = !!isDevelopment;
-    this.didHandleRedirect = false;
 
     // todo - make path configurable, node_modules maybe?
     this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
     this.connectToSharedWorker();
-    this.workerCallbacks = {};
+
+    this.connectToSocket();
+  }
+
+  private connectToSocket(): void {
+    if (this.isConectingToSocket || this.socketIsConnected) {
+      return;
+    }
+
+    this.isConectingToSocket = true;
+    if (!this.getAuthToken()) {
+      this.socket = null;
+      this.socketIsConnected = false;
+      this.isConectingToSocket = false;
+      return;
+    }
+
+    this.socket = io(this.host.substring(0, this.host.indexOf('/v1')), {
+      auth: { token: this.getAuthToken() },
+    });
+    this.socket.on('connect', () => {
+      this.socketIsConnected = true;
+      this.isConectingToSocket = false;
+      this.socket!.on('rpc', this.handleRpcEvent);
+
+      this.pendingRpcEvents.forEach((e) => this.socket?.emit('rpc', e));
+      this.pendingRpcEvents = new Set();
+    });
   }
 
   private connectToSharedWorker(): void {
@@ -222,6 +257,49 @@ class WallyConnector {
     localStorage.removeItem(`wally:${this.clientId}:state:token`);
   }
 
+  private addRpcListener = (event: string, cb: (a: any) => void) => {
+    if (!this.rpcEventListeners[event]) {
+      this.rpcEventListeners[event] = [];
+    }
+
+    this.rpcEventListeners[event].push(cb);
+  };
+
+  private handleRpcEvent = (event: RpcEvent) => {
+    const { type, value } = event;
+    if (
+      value === null ||
+      Object.keys(this.rpcEventListeners).indexOf(type) < 0
+    ) {
+      return;
+    }
+
+    this.rpcEventListeners[event.type]?.forEach((cb) => cb(value));
+  };
+
+  on(event: string, cb: (data: any) => void) {
+    this.addRpcListener(event, cb);
+
+    if (!this.socket || !this.socketIsConnected) {
+      this.pendingRpcEvents.add(event);
+      this.connectToSocket();
+    } else if (this.socket && this.socketIsConnected) {
+      this.socket.emit('rpc', event);
+    }
+  }
+
+  async off() {
+    if (!this.socket) {
+      this.socketIsConnected = false;
+      return;
+    }
+
+    this.rpcEventListeners = {};
+    this.socket.emit('rpc_stop');
+    this.socket.close();
+    this.socketIsConnected = false;
+  }
+
   async request(req: RequestObj): Promise<any> {
     if (!this.isLoggedIn()) {
       await this.loginWithEmail();
@@ -234,6 +312,8 @@ class WallyConnector {
       case MethodName.PERSONAL_SIGN:
       case MethodName.SIGN:
         return this.signMessage(req.params);
+      // SUBSCRIBE DOESN'T WORK - JUST FOR DEMO
+      case MethodName.SUBSCRIBE:
       case MethodName.GET_BALANCE:
         return this._request(req.method, req.params);
     }

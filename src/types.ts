@@ -19,11 +19,18 @@ export interface RequestObj {
   params: any;
 }
 
+export interface RpcEvent {
+  event: 'rpc',
+  type: string,
+  value: any,
+}
+
 export enum MethodName {
   REQUEST_ACCOUNTS = 'eth_requestAccounts',
   PERSONAL_SIGN = 'personal_sign',
   SIGN = 'eth_sign',
   GET_BALANCE = 'eth_getBalance',
+  SUBSCRIBE = 'eth_subscribe',
 }
 
 export enum WorkerMessage {

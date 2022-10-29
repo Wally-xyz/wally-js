@@ -6,6 +6,7 @@ import Web3 from 'web3';
 
 import Connect from 'components/connect';
 import Sign from 'components/sign';
+import Socket from 'components/socket';
 
 import styles from 'styles/Home.module.css';
 
@@ -81,6 +82,8 @@ const Home: React.FC = () => {
       ) : (
         <Connect setAddress={setAddress} web3={web3} />
       )}
+      <br />
+      <Socket wally={provider} web3={web3} />
     </>
   );
 };
