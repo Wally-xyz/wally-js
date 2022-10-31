@@ -7,12 +7,15 @@ import Web3 from 'web3';
 import Connect from 'components/connect';
 import Sign from 'components/sign';
 
+import Metamask from 'icons/Metamask';
+
 import styles from 'styles/Home.module.css';
 
 import { getProvider } from 'wally';
 
 const Home: React.FC = () => {
-  const [isUsingWally, setIsUsingWally] = useState(true);
+  const [isUsingWally, setIsUsingWally] = useState(false);
+  const [emailAddress, setEmailAddress] = useState('');
   const [provider, setProvider] = useState<MetaMaskInpageProvider | any>(null);
   const [address, setAddress] = useState(null);
   const [web3, setWeb3] = useState(null);
@@ -41,36 +44,9 @@ const Home: React.FC = () => {
     }
   }, [provider, setAddress]);
 
-  const onChange = (e) => {
-    setIsUsingWally(e.target.value === 'wally');
-    setProvider(null);
-    setAddress(null);
-  };
-
   return (
     <>
       <h1 className={styles.title}>EasySign Demo</h1>
-      <span>
-        Use{' '}
-        <input
-          type="radio"
-          name="provider"
-          value="metamask"
-          checked={!isUsingWally}
-          onChange={onChange}
-        />
-        MetaMask
-        <input
-          type="radio"
-          name="provider"
-          value="wally"
-          checked={isUsingWally}
-          onChange={onChange}
-        />
-        Wally
-        <br />
-      </span>
-      <br />
       {address ? (
         <Sign
           isUsingWally={isUsingWally}
@@ -79,7 +55,36 @@ const Home: React.FC = () => {
           web3={web3}
         />
       ) : (
-        <Connect setAddress={setAddress} web3={web3} />
+        <>
+          <input
+            className={styles.emailInput}
+            type="text"
+            name="provider"
+            value={emailAddress}
+            onChange={(e) => {
+              setEmailAddress(e.target.value);
+              setIsUsingWally(true);
+            }}
+            placeholder="Email"
+          />
+          <Connect
+            className={styles.button}
+            setAddress={setAddress}
+            web3={web3}
+          >
+            Sign Up
+          </Connect>
+          <div className={styles.dividerBlock}>
+            <div className={styles.dividerContainer}>
+              <div className={styles.divider}></div>
+              <span>OR</span>
+              <div className={styles.divider}></div>
+            </div>
+          </div>
+          <Connect setAddress={setAddress} web3={web3}>
+            <Metamask className={styles.walletLogo} />
+          </Connect>
+        </>
       )}
     </>
   );
