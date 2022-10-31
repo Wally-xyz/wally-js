@@ -1,4 +1,4 @@
-export const APP_ROOT = 'https://api.wally.xyz/';
+export const APP_ROOT = 'https://api.wally.xyz/v1';
 export const REDIRECT_CAPTION_ID = 'wally-redirect-caption';
 export const SCRIM_TEXT_ID = 'wally-scrim-text';
 

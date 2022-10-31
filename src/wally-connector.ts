@@ -70,6 +70,7 @@ class WallyConnector {
 
   public async loginWithEmail(): Promise<void> {
     if (!this.clientId) {
+      console.error('Please set a client ID')
       return;
     }
     const state = this.generateStateCode();
@@ -224,6 +225,7 @@ class WallyConnector {
 
   async request(req: RequestObj): Promise<any> {
     if (!this.isLoggedIn()) {
+      console.log('logging in...')
       await this.loginWithEmail();
     }
 
@@ -256,6 +258,7 @@ class WallyConnector {
         console.error(
           'The Wally server returned a non-successful response when fetching wallet details'
         );
+        await this.loginWithEmail();
       }
     } catch (err) {
       console.error(`Unable to fetch Wally wallet: ${err}`);
