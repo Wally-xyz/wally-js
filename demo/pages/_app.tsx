@@ -13,7 +13,7 @@ const MyApp: React.FC<LayoutProps> = ({ Component, pageProps }) => {
   if (typeof window !== 'undefined') {
     init({
       clientId: process.env.NEXT_PUBLIC_CLIENT_ID,
-      isDevelopment: true,
+      isDevelopment: false,
       devUrl: process.env.NEXT_PUBLIC_DEV_URL,
     });
   }
