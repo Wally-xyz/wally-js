@@ -2,11 +2,18 @@ import React, { useCallback, useState } from 'react';
 import Web3 from 'web3';
 
 interface ConnectProps {
+  className?: string;
   setAddress(a: string): void;
   web3: Web3;
+  children: any;
 }
 
-const Connect: React.FC<ConnectProps> = ({ setAddress, web3 }) => {
+const Connect: React.FC<ConnectProps> = ({
+  children,
+  className,
+  setAddress,
+  web3,
+}) => {
   if (!web3) {
     return null;
   }
@@ -27,7 +34,9 @@ const Connect: React.FC<ConnectProps> = ({ setAddress, web3 }) => {
 
   return (
     <div style={{ textAlign: 'center' }}>
-      <button onClick={onClick}>Request Account</button>
+      <button className={className} onClick={onClick}>
+        {children}
+      </button>
       {err ? (
         <p style={{ color: 'orangered' }}>Error fetching account</p>
       ) : null}
