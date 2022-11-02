@@ -70,7 +70,7 @@ class WallyConnector {
 
   public async loginWithEmail(): Promise<void> {
     if (!this.clientId) {
-      console.error('Please set a client ID')
+      console.error('Please set a client ID');
       return;
     }
     const state = this.generateStateCode();
@@ -140,6 +140,9 @@ class WallyConnector {
     const authCode = queryParams.get('authorization_code');
 
     let resp: Response;
+    let error = null;
+    const caption = document.getElementById(REDIRECT_CAPTION_ID);
+
     try {
       resp = await fetch(`${this.host}/oauth/token`, {
         method: 'POST',
@@ -151,36 +154,44 @@ class WallyConnector {
           authCode,
         }),
       });
+      console.log({ resp });
       if (resp && resp?.ok && resp?.status < 300) {
         const data = await resp.json();
         this.setAuthToken(data.token);
-        if (this.worker) {
-          this.worker.port.postMessage(WorkerMessage.LOGIN_SUCCESS);
-        } else {
-          const caption = document.getElementById(REDIRECT_CAPTION_ID);
-          caption
-            ? (caption.innerText =
-                'Success. You may now close this page and refresh the app.')
-            : {};
-        }
       } else {
-        this.deleteState();
+        error = await resp.text();
         console.error(
           'The Wally server returned a non-successful response when exchanging authorization code for token'
         );
-        this.worker
-          ? this.worker.port.postMessage(WorkerMessage.LOGIN_FAILURE)
-          : {};
       }
     } catch (err) {
+      error = err;
       console.error(`Unable to fetch Wally access token: ${err}`);
+    }
+
+    if (error) {
       this.deleteState();
       this.worker
         ? this.worker.port.postMessage(WorkerMessage.LOGIN_FAILURE)
         : {};
+
+      if (caption) {
+        caption.innerText = `Error retreiving token.\n${error.toString()}`;
+        caption.style.color = 'red';
+      }
+      return;
     }
 
-    if (closeWindow && this.worker) {
+    if (this.worker) {
+      this.worker.port.postMessage(WorkerMessage.LOGIN_SUCCESS);
+    }
+
+    caption
+      ? (caption.innerText =
+          'Success. You may now close this page and refresh the app.')
+      : {};
+
+    if (closeWindow) {
       window.setTimeout(window.close, 1000);
     }
   }
