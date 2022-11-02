@@ -53,6 +53,7 @@ class WallyConnector {
     loginWithEmail() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.clientId) {
+                console.error('Please set a client ID');
                 return;
             }
             const state = this.generateStateCode();
@@ -221,6 +222,7 @@ class WallyConnector {
                 }
                 else {
                     console.error('The Wally server returned a non-successful response when fetching wallet details');
+                    yield this.loginWithEmail();
                 }
             }
             catch (err) {
