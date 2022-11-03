@@ -3,9 +3,9 @@
 Install the library
 
 ```
-$ npm install wally
+$ npm install wally-sdk
 --- or ---
-$ yarn wally
+$ yarn wally-sdk
 ```
 
 Import the init() function from the Wally library, and configure it with your clientID (available in the Wally dashboard on your app’s page).
