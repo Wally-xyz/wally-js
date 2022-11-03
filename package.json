@@ -1,9 +1,10 @@
 {
-  "name": "wallet-connector",
+  "name": "wally-sdk",
   "version": "0.0.1",
   "description": "Connector lib for wallet-api",
   "license": "ISC",
-  "author": "",
+  "author": "Wally <contact@wally.xyz>",
+  "repository": "Wally-xyz/wallet-connector",
   "main": "dist/index.js",
   "scripts": {
     "build": "./node_modules/.bin/tsc --project .",
