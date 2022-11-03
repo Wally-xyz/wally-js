@@ -4,7 +4,9 @@ A demo app to login and sign an arbitrary message, with both MetaMask and Wally,
 
 ## Requirements
 
-Make sure you have the MetaMask extension installed, and the `wally-api` running _(locally, haven't tested prod yet)_
+- you have the MetaMask extension installed
+- `wally-api` running _(locally, haven't tested prod yet)_
+- redirect url set to `http://localhost:3000/handle-redirect` in the `wallet-dashboard` for your app
 
 ## Install
 

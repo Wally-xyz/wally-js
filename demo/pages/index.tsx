@@ -14,7 +14,7 @@ import styles from 'styles/Home.module.css';
 import { getProvider } from 'wally';
 
 const Home: React.FC = () => {
-  const [isUsingWally, setIsUsingWally] = useState(false);
+  const [isUsingWally, setIsUsingWally] = useState(true);
   const [emailAddress, setEmailAddress] = useState('');
   const [provider, setProvider] = useState<MetaMaskInpageProvider | any>(null);
   const [address, setAddress] = useState(null);
