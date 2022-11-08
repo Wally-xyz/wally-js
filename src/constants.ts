@@ -62,11 +62,11 @@ export const getRedirectPage = (): HTMLElement => {
 };
 
 export const WALLY_ROUTES: Record<WallyMethodName, string> = {
-  [WallyMethodName.ACCOUNTS]: '/me',
-  [WallyMethodName.REQUEST_ACCOUNTS]: '/me',
-  [WallyMethodName.SIGN]: '/wallet/sign-message',
-  [WallyMethodName.PERSONAL_SIGN]: '/wallet/sign-message',
-  [WallyMethodName.SIGN_TYPED]: '/wallet/sign-typed-data',
-  [WallyMethodName.SIGN_TRANSACTION]: '/wallet/sign-transaction',
-  [WallyMethodName.SEND_TRANSACTION]: '/wallet/send-transaction',
+  [WallyMethodName.ACCOUNTS]: 'me',
+  [WallyMethodName.REQUEST_ACCOUNTS]: 'me',
+  [WallyMethodName.SIGN]: 'wallet/sign-message',
+  [WallyMethodName.PERSONAL_SIGN]: 'wallet/sign-message',
+  [WallyMethodName.SIGN_TYPED]: 'wallet/sign-typed-data',
+  [WallyMethodName.SIGN_TRANSACTION]: 'wallet/sign-transaction',
+  [WallyMethodName.SEND_TRANSACTION]: 'wallet/send-transaction',
 }

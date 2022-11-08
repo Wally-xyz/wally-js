@@ -58,12 +58,12 @@ const getRedirectPage = () => {
 };
 exports.getRedirectPage = getRedirectPage;
 exports.WALLY_ROUTES = {
-    [types_1.WallyMethodName.ACCOUNTS]: '/me',
-    [types_1.WallyMethodName.REQUEST_ACCOUNTS]: '/me',
-    [types_1.WallyMethodName.SIGN]: '/wallet/sign-message',
-    [types_1.WallyMethodName.PERSONAL_SIGN]: '/wallet/sign-message',
-    [types_1.WallyMethodName.SIGN_TYPED]: '/wallet/sign-typed-data',
-    [types_1.WallyMethodName.SIGN_TRANSACTION]: '/wallet/sign-transaction',
-    [types_1.WallyMethodName.SEND_TRANSACTION]: '/wallet/send-transaction',
+    [types_1.WallyMethodName.ACCOUNTS]: 'me',
+    [types_1.WallyMethodName.REQUEST_ACCOUNTS]: 'me',
+    [types_1.WallyMethodName.SIGN]: 'wallet/sign-message',
+    [types_1.WallyMethodName.PERSONAL_SIGN]: 'wallet/sign-message',
+    [types_1.WallyMethodName.SIGN_TYPED]: 'wallet/sign-typed-data',
+    [types_1.WallyMethodName.SIGN_TRANSACTION]: 'wallet/sign-transaction',
+    [types_1.WallyMethodName.SEND_TRANSACTION]: 'wallet/send-transaction',
 };
 //# sourceMappingURL=constants.js.map

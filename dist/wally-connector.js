@@ -266,7 +266,7 @@ class WallyConnector {
         return __awaiter(this, void 0, void 0, function* () {
             let resp;
             try {
-                resp = yield fetch(`${this.host}/oauth${constants_1.WALLY_ROUTES[method]}`, Object.assign({ method: 'POST', headers: Object.assign({ Authorization: `Bearer ${this.getAuthToken()}` }, (method.indexOf('sign') > -1
+                resp = yield fetch(`${this.host}/oauth/${constants_1.WALLY_ROUTES[method]}`, Object.assign({ method: 'POST', headers: Object.assign({ Authorization: `Bearer ${this.getAuthToken()}` }, (method.indexOf('sign') > -1
                         ? { 'Content-Type': 'application/json' }
                         : {})) }, (params &&
                     params.length > 0 && {
@@ -309,7 +309,7 @@ class WallyConnector {
                     }),
                 });
                 if (!resp.ok || resp.status >= 300) {
-                    throw new Error('Wally server returned a non-successful response when signing a message');
+                    throw new Error(`Wally server returned a non-successful response when handling method: ${method}`);
                 }
                 const contentType = resp.headers.get('content-type');
                 if (contentType && contentType.indexOf('application/json') !== -1) {

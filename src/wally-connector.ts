@@ -330,7 +330,7 @@ class WallyConnector {
   ): Promise<WallyResponse<T> | null> {
     let resp: Response;
     try {
-      resp = await fetch(`${this.host}/oauth${WALLY_ROUTES[method]}`, {
+      resp = await fetch(`${this.host}/oauth/${WALLY_ROUTES[method]}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.getAuthToken()}`,
@@ -387,7 +387,7 @@ class WallyConnector {
 
       if (!resp.ok || resp.status >= 300) {
         throw new Error(
-          'Wally server returned a non-successful response when signing a message'
+          `Wally server returned a non-successful response when handling method: ${method}`
         );
       }
 
