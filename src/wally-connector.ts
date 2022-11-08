@@ -1,9 +1,17 @@
 import {
-  WallyConnectorOptions,
+  MethodNameType,
+  MethodResponse,
+  PersonalSignParams,
   RedirectOptions,
   RequestObj,
-  MethodName,
-  SignedMessage,
+  RPCMethodName,
+  RPCMethodParams,
+  RPCResponse,
+  SignParams,
+  WallyConnectorOptions,
+  WallyMethodName,
+  WallyMethodParams,
+  WallyResponse,
   WorkerMessage,
 } from './types';
 
@@ -13,6 +21,7 @@ import {
   SCRIM_TEXT_ID,
   getRedirectPage,
   getScrimElement,
+  WALLY_ROUTES,
 } from './constants';
 
 class WallyConnector {
@@ -234,96 +243,177 @@ class WallyConnector {
     localStorage.removeItem(`wally:${this.clientId}:state:token`);
   }
 
-  async request(req: RequestObj): Promise<any> {
+  private isWallyMethod(name: MethodNameType): name is WallyMethodName {
+    return Object.values(WallyMethodName).indexOf(name as any) > -1;
+  }
+
+  private isRPCMethod(name: MethodNameType): name is RPCMethodName {
+    return Object.values(RPCMethodName).indexOf(name as any) > -1;
+  }
+
+  /**
+   * This is the major exposed method for supporting JSON RPC methods
+   * and associated wallet/blockchain functionality.
+   * There are two main types of requests: those that require wallet info
+   * (address, signing), and those that do not (gas prices, last block).
+   * We route the former to customized endpoints on the backend that handle
+   * this extra wallet fetching and logic, and the latter to an endpoint
+   * that essentially works as a passthrough to ethers/alchemy.
+   *
+   * TODO: Move requesting logic and helpers to separate file/module
+   * @param req
+   * @param req.method - the name of the RPC method
+   * @param req.params - the required parameters for the method
+   * @returns Promise<MethodResponse> | null
+   * @see https://ethereum.org/en/developers/docs/apis/json-rpc/#json-rpc-methods
+   */
+  async request<T extends MethodNameType>(
+    req: RequestObj<T>
+  ): Promise<MethodResponse<T> | null> {
     if (!this.isLoggedIn()) {
       await this.loginWithEmail();
     }
 
-    switch (req.method) {
-      case MethodName.REQUEST_ACCOUNTS:
-        return this.requestAccounts();
-      // TODO: figure out which name to use
-      case MethodName.PERSONAL_SIGN:
-      case MethodName.SIGN:
-        return this.signMessage(req.params);
-      case MethodName.GET_BALANCE:
-        return this._request(req.method, req.params);
+    if (this.isWallyMethod(req.method)) {
+      return this.requestWally(
+        req.method as WallyMethodName,
+        'params' in req ? (req.params as WallyMethodParams<T>) : undefined
+      ) as Promise<WallyResponse<T>>;
+    } else if (this.isRPCMethod(req.method)) {
+      return this.requestRPC(
+        req.method as RPCMethodName,
+        'params' in req ? (req.params as RPCMethodParams<T>) : undefined
+      );
+    } else {
+      throw new Error(`Method ${req.method} is unsupported at this time.`);
     }
   }
 
-  async requestAccounts(): Promise<string[]> {
+  private formatWallyParams<T extends WallyMethodName>(
+    method: T,
+    params: WallyMethodParams<T>
+  ): string {
+    switch (method) {
+      case WallyMethodName.SIGN:
+        return JSON.stringify({ message: (params as SignParams)[1] });
+      case WallyMethodName.PERSONAL_SIGN:
+        return JSON.stringify({ message: (params as PersonalSignParams)[0] });
+      default:
+        return JSON.stringify(params);
+    }
+  }
+
+  private formatWallyResponse<T extends WallyMethodName>(
+    method: T,
+    data: any
+  ): WallyResponse<T> | null {
+    switch (method) {
+      case WallyMethodName.ACCOUNTS:
+      case WallyMethodName.REQUEST_ACCOUNTS: {
+        const { address } = data;
+        this.selectedAddress = address;
+        return [address] as WallyResponse<T>;
+      }
+      case WallyMethodName.SIGN:
+      case WallyMethodName.PERSONAL_SIGN:
+      case WallyMethodName.SIGN_TRANSACTION:
+      case WallyMethodName.SIGN_TYPED: {
+        const { signature } = data;
+        return signature;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Method used doing wallet-related actions like requesting accounts
+   * and signing things - actions that require wallet/private key access
+   * and are basically the core wally value prop.
+   * @param method The RPC method name associated with the wally api call
+   * @param params The json rpc spec params (*not* wally's spec)
+   * @returns WallyResponse - adheres to the json rpc spec
+   */
+  private async requestWally<T extends WallyMethodName>(
+    method: T,
+    params: WallyMethodParams<T>
+  ): Promise<WallyResponse<T> | null> {
     let resp: Response;
     try {
-      resp = await fetch(`${this.host}/oauth/me`, {
+      resp = await fetch(`${this.host}/oauth/${WALLY_ROUTES[method]}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.getAuthToken()}`,
+          ...(method.indexOf('sign') > -1
+            ? { 'Content-Type': 'application/json' }
+            : {}),
         },
+        ...(params &&
+          params.length > 0 && {
+            body: this.formatWallyParams(method, params),
+          }),
       });
       if (resp && resp?.ok && resp?.status < 300) {
         const data = await resp.json();
-        this.selectedAddress = data.address;
-        return [this.selectedAddress || ''];
+        return this.formatWallyResponse(method, data);
       } else {
         console.error(
-          'The Wally server returned a non-successful response when fetching wallet details'
+          `The Wally server returned a non-successful response when handling method: ${method}`
         );
-        await this.loginWithEmail();
       }
     } catch (err) {
-      console.error(`Unable to fetch Wally wallet: ${err}`);
-    }
-    return [];
-  }
-
-  async signMessage(params: string[]): Promise<SignedMessage | string> {
-    const resp = await fetch(`${this.host}/oauth/wallet/sign-message`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.getAuthToken()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: params[1],
-      }),
-    });
-
-    if (!resp.ok || resp.status >= 300) {
-      throw new Error(
-        'Wally server returned a non-successful response when signing a message'
+      console.error(
+        `Wally server returned error: ${err} when handling method: ${method}`
       );
     }
-    const json = await resp.json();
-    return json.signature;
+
+    return null;
   }
 
   /**
    * Handle other non-wally-specific methods - forwards to ethers/alchemy
    * on the backend
-   * @param method The RPC Method
-   * @param params Arbitrary array of params
-   * @returns whatever you want it to
+   * @param method The RPC method name
+   * @param params The json rpc spec params
+   * @returns RPCResponse - adheres to the json rpc spec
    */
-  private async _request(method: string, params: string[]): Promise<any> {
-    const resp = await fetch(`${this.host}/oauth/wallet/send`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.getAuthToken()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        method,
-        params,
-      }),
-    });
+  private async requestRPC<T extends RPCMethodName>(
+    method: T,
+    params: RPCMethodParams<T>
+  ): Promise<RPCResponse<T> | null> {
+    console.log({ method, params });
+    try {
+      const resp = await fetch(`${this.host}/oauth/wallet/send`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.getAuthToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          method,
+          params,
+        }),
+      });
 
-    if (!resp.ok || resp.status >= 300) {
-      throw new Error(
-        'Wally server returned a non-successful response when signing a message'
+      if (!resp.ok || resp.status >= 300) {
+        throw new Error(
+          `Wally server returned a non-successful response when handling method: ${method}`
+        );
+      }
+
+      const contentType = resp.headers.get('content-type');
+      if (contentType && contentType.indexOf('application/json') !== -1) {
+        const json = await resp.json();
+        return json;
+      } else {
+        const text = await resp.text();
+        return text as RPCResponse<T>;
+      }
+    } catch (err) {
+      console.error(
+        `Wally server returned error: ${err} when handling method: ${method}`
       );
     }
-    const body = await resp.text();
-    return body;
+    return null;
   }
 }
 
