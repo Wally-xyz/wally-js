@@ -1,3 +1,5 @@
+import { WallyMethodName } from "./types";
+
 export const APP_ROOT = 'https://api.wally.xyz/v1';
 export const REDIRECT_CAPTION_ID = 'wally-redirect-caption';
 export const SCRIM_TEXT_ID = 'wally-scrim-text';
@@ -58,3 +60,13 @@ export const getRedirectPage = (): HTMLElement => {
 
   return containerEl;
 };
+
+export const WALLY_ROUTES: Record<WallyMethodName, string> = {
+  [WallyMethodName.ACCOUNTS]: '/me',
+  [WallyMethodName.REQUEST_ACCOUNTS]: '/me',
+  [WallyMethodName.SIGN]: '/wallet/sign-message',
+  [WallyMethodName.PERSONAL_SIGN]: '/wallet/sign-message',
+  [WallyMethodName.SIGN_TYPED]: '/wallet/sign-typed-data',
+  [WallyMethodName.SIGN_TRANSACTION]: '/wallet/sign-transaction',
+  [WallyMethodName.SEND_TRANSACTION]: '/wallet/send-transaction',
+}
