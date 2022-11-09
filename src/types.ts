@@ -40,7 +40,7 @@ export type RequestObj<T extends MethodNameType> = T extends WallyMethodNameType
 export type WallyRequestObj<T extends WallyMethodName | WallyMethodNameType> = {
   method: T;
 } & (T extends WallyMethodNoParams
-  ? undefined
+  ? unknown
   : {
       params: WallyMethodParams<T>;
     });
@@ -48,7 +48,7 @@ export type WallyRequestObj<T extends WallyMethodName | WallyMethodNameType> = {
 export type RPCRequestObj<T extends RPCMethodName | RPCMethodNameType> = {
   method: T;
 } & (T extends RPCMethodNoParams
-  ? undefined
+  ? unknown
   : {
       params: RPCMethodParams<T>;
     });
