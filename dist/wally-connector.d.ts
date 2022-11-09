@@ -21,6 +21,8 @@ declare class WallyConnector {
     private saveState;
     private getState;
     private deleteState;
+    private isWallyMethod;
+    private isRPCMethod;
     /**
      * This is the major exposed method for supporting JSON RPC methods
      * and associated wallet/blockchain functionality.
