@@ -21,12 +21,12 @@ export declare enum WorkerMessage {
 export declare type RequestObj<T extends MethodNameType> = T extends WallyMethodNameType ? WallyRequestObj<T> : T extends RPCMethodNameType ? RPCRequestObj<T> : undefined;
 export declare type WallyRequestObj<T extends WallyMethodName | WallyMethodNameType> = {
     method: T;
-} & (T extends WallyMethodNoParams ? undefined : {
+} & (T extends WallyMethodNoParams ? unknown : {
     params: WallyMethodParams<T>;
 });
 export declare type RPCRequestObj<T extends RPCMethodName | RPCMethodNameType> = {
     method: T;
-} & (T extends RPCMethodNoParams ? undefined : {
+} & (T extends RPCMethodNoParams ? unknown : {
     params: RPCMethodParams<T>;
 });
 export declare type HexString = string;

@@ -193,6 +193,12 @@ class WallyConnector {
     deleteState() {
         localStorage.removeItem(`wally:${this.clientId}:state:token`);
     }
+    isWallyMethod(name) {
+        return Object.values(types_1.WallyMethodName).indexOf(name) > -1;
+    }
+    isRPCMethod(name) {
+        return Object.values(types_1.RPCMethodName).indexOf(name) > -1;
+    }
     /**
      * This is the major exposed method for supporting JSON RPC methods
      * and associated wallet/blockchain functionality.
@@ -215,10 +221,10 @@ class WallyConnector {
                 console.log('logging in...');
                 yield this.loginWithEmail();
             }
-            if (Object.values(types_1.WallyMethodName).indexOf(req.method) > -1) {
+            if (this.isWallyMethod(req.method)) {
                 return this.requestWally(req.method, 'params' in req ? req.params : undefined);
             }
-            else if (Object.values(types_1.RPCMethodName).indexOf(req.method) > -1) {
+            else if (this.isRPCMethod(req.method)) {
                 return this.requestRPC(req.method, 'params' in req ? req.params : undefined);
             }
             else {
@@ -227,14 +233,13 @@ class WallyConnector {
         });
     }
     formatWallyParams(method, params) {
-        if (method === types_1.WallyMethodName.SIGN) {
-            return JSON.stringify({ message: params[1] });
-        }
-        else if (method === types_1.WallyMethodName.PERSONAL_SIGN) {
-            return JSON.stringify({ message: params[0] });
-        }
-        else {
-            return JSON.stringify(params);
+        switch (method) {
+            case types_1.WallyMethodName.SIGN:
+                return JSON.stringify({ message: params[1] });
+            case types_1.WallyMethodName.PERSONAL_SIGN:
+                return JSON.stringify({ message: params[0] });
+            default:
+                return JSON.stringify(params);
         }
     }
     formatWallyResponse(method, data) {
@@ -267,7 +272,7 @@ class WallyConnector {
         return __awaiter(this, void 0, void 0, function* () {
             let resp;
             try {
-                resp = yield fetch(`${this.host}/oauth${constants_1.WALLY_ROUTES[method]}`, Object.assign({ method: 'POST', headers: Object.assign({ Authorization: `Bearer ${this.getAuthToken()}` }, (method.indexOf('sign') > -1
+                resp = yield fetch(`${this.host}/oauth/${constants_1.WALLY_ROUTES[method]}`, Object.assign({ method: 'POST', headers: Object.assign({ Authorization: `Bearer ${this.getAuthToken()}` }, (method.indexOf('sign') > -1
                         ? { 'Content-Type': 'application/json' }
                         : {})) }, (params &&
                     params.length > 0 && {
@@ -310,7 +315,7 @@ class WallyConnector {
                     }),
                 });
                 if (!resp.ok || resp.status >= 300) {
-                    throw new Error('Wally server returned a non-successful response when signing a message');
+                    throw new Error(`Wally server returned a non-successful response when handling method: ${method}`);
                 }
                 const contentType = resp.headers.get('content-type');
                 if (contentType && contentType.indexOf('application/json') !== -1) {

@@ -243,6 +243,14 @@ class WallyConnector {
     localStorage.removeItem(`wally:${this.clientId}:state:token`);
   }
 
+  private isWallyMethod(name: MethodNameType): name is WallyMethodName {
+    return Object.values(WallyMethodName).indexOf(name as any) > -1;
+  }
+
+  private isRPCMethod(name: MethodNameType): name is RPCMethodName {
+    return Object.values(RPCMethodName).indexOf(name as any) > -1;
+  }
+
   /**
    * This is the major exposed method for supporting JSON RPC methods
    * and associated wallet/blockchain functionality.
@@ -267,12 +275,12 @@ class WallyConnector {
       await this.loginWithEmail();
     }
 
-    if (Object.values(WallyMethodName).indexOf(req.method as any) > -1) {
+    if (this.isWallyMethod(req.method)) {
       return this.requestWally(
         req.method as WallyMethodName,
         'params' in req ? (req.params as WallyMethodParams<T>) : undefined
       ) as Promise<WallyResponse<T>>;
-    } else if (Object.values(RPCMethodName).indexOf(req.method as any) > -1) {
+    } else if (this.isRPCMethod(req.method)) {
       return this.requestRPC(
         req.method as RPCMethodName,
         'params' in req ? (req.params as RPCMethodParams<T>) : undefined
@@ -286,12 +294,13 @@ class WallyConnector {
     method: T,
     params: WallyMethodParams<T>
   ): string {
-    if (method === WallyMethodName.SIGN) {
-      return JSON.stringify({ message: (params as SignParams)[1] });
-    } else if (method === WallyMethodName.PERSONAL_SIGN) {
-      return JSON.stringify({ message: (params as PersonalSignParams)[0] });
-    } else {
-      return JSON.stringify(params);
+    switch (method) {
+      case WallyMethodName.SIGN:
+        return JSON.stringify({ message: (params as SignParams)[1] });
+      case WallyMethodName.PERSONAL_SIGN:
+        return JSON.stringify({ message: (params as PersonalSignParams)[0] });
+      default:
+        return JSON.stringify(params);
     }
   }
 
@@ -331,7 +340,7 @@ class WallyConnector {
   ): Promise<WallyResponse<T> | null> {
     let resp: Response;
     try {
-      resp = await fetch(`${this.host}/oauth${WALLY_ROUTES[method]}`, {
+      resp = await fetch(`${this.host}/oauth/${WALLY_ROUTES[method]}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.getAuthToken()}`,
@@ -388,7 +397,7 @@ class WallyConnector {
 
       if (!resp.ok || resp.status >= 300) {
         throw new Error(
-          'Wally server returned a non-successful response when signing a message'
+          `Wally server returned a non-successful response when handling method: ${method}`
         );
       }
 

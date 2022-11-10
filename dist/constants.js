@@ -57,13 +57,17 @@ const getRedirectPage = () => {
     return containerEl;
 };
 exports.getRedirectPage = getRedirectPage;
+// TODO: Figure out the difference between sign & personal sign.
+// There might be some prefixing deal in the spec, but right now
+// both of them do. Will probably come back once we test this out
+// in some real dApps.
 exports.WALLY_ROUTES = {
-    [types_1.WallyMethodName.ACCOUNTS]: '/me',
-    [types_1.WallyMethodName.REQUEST_ACCOUNTS]: '/me',
-    [types_1.WallyMethodName.SIGN]: '/wallet/sign-message',
-    [types_1.WallyMethodName.PERSONAL_SIGN]: '/wallet/sign-message',
-    [types_1.WallyMethodName.SIGN_TYPED]: '/wallet/sign-typed-data',
-    [types_1.WallyMethodName.SIGN_TRANSACTION]: '/wallet/sign-transaction',
-    [types_1.WallyMethodName.SEND_TRANSACTION]: '/wallet/send-transaction',
+    [types_1.WallyMethodName.ACCOUNTS]: 'me',
+    [types_1.WallyMethodName.REQUEST_ACCOUNTS]: 'me',
+    [types_1.WallyMethodName.SIGN]: 'wallet/sign-message',
+    [types_1.WallyMethodName.PERSONAL_SIGN]: 'wallet/sign-message',
+    [types_1.WallyMethodName.SIGN_TYPED]: 'wallet/sign-typed-data',
+    [types_1.WallyMethodName.SIGN_TRANSACTION]: 'wallet/sign-transaction',
+    [types_1.WallyMethodName.SEND_TRANSACTION]: 'wallet/send-transaction',
 };
 //# sourceMappingURL=constants.js.map
