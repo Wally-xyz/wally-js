@@ -264,6 +264,7 @@ export type RPCResponse<T> = T extends `${RPCMethodName.NET_LISTENING}`
       | `${RPCMethodName.NEW_FILTER}`
       | `${RPCMethodName.NEW_BLOCK_FILTER}`
       | `${RPCMethodName.NEW_PENDING_TRANSACTION_FILTER}`
+      | `${RPCMethodName.CHAIN_ID}`
   ? HexString
   : T extends `${RPCMethodName.GET_FILTER_CHANGES}`
   ? HexString[]
