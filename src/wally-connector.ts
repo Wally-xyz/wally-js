@@ -285,7 +285,11 @@ class WallyConnector {
         'params' in req ? (req.params as RPCMethodParams<T>) : undefined
       );
     } else {
-      throw new Error(`Method ${req.method} is unsupported at this time.`);
+      console.error(`Method: ${req.method} is not officially supported by wally at this time, use at your own risk! Contact wally support to get it prioritized.`)
+      return this.requestRPC(
+        req.method as any,
+        'params' in req ? (req.params as any) : undefined
+      );
     }
   }
 

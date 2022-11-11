@@ -121,6 +121,7 @@ export enum RPCMethodName {
   GET_FILTER_CHANGES = 'eth_getFilterChanges',
   GET_FILTER_LOGS = 'eth_getFilterLogs',
   GET_LOGS = 'eth_getLogs',
+  CHAIN_ID = 'eth_chainId',
 }
 
 export type RPCMethodNameType = `${RPCMethodName}`;
@@ -174,6 +175,7 @@ type RPCMethodNoParams =
   | `${RPCMethodName.BLOCK_NUMBER}`
   | `${RPCMethodName.NEW_BLOCK_FILTER}`
   | `${RPCMethodName.NEW_PENDING_TRANSACTION_FILTER}`
+  | `${RPCMethodName.CHAIN_ID}`
 
 export type RPCMethodParams<T> = T extends RPCMethodNoParams
   ? undefined
@@ -262,6 +264,7 @@ export type RPCResponse<T> = T extends `${RPCMethodName.NET_LISTENING}`
       | `${RPCMethodName.NEW_FILTER}`
       | `${RPCMethodName.NEW_BLOCK_FILTER}`
       | `${RPCMethodName.NEW_PENDING_TRANSACTION_FILTER}`
+      | `${RPCMethodName.CHAIN_ID}`
   ? HexString
   : T extends `${RPCMethodName.GET_FILTER_CHANGES}`
   ? HexString[]
