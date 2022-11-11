@@ -71,6 +71,7 @@ export const WALLY_ROUTES: Record<WallyMethodName, string> = {
   [WallyMethodName.SIGN]: 'wallet/sign-message',
   [WallyMethodName.PERSONAL_SIGN]: 'wallet/sign-message',
   [WallyMethodName.SIGN_TYPED]: 'wallet/sign-typed-data',
+  [WallyMethodName.SIGN_TYPED_V4]: 'wallet/sign-typed-data',
   [WallyMethodName.SIGN_TRANSACTION]: 'wallet/sign-transaction',
   [WallyMethodName.SEND_TRANSACTION]: 'wallet/send-transaction',
 }

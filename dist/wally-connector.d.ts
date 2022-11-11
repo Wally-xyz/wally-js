@@ -7,7 +7,8 @@ declare class WallyConnector {
     private didHandleRedirect;
     private worker;
     private workerCallbacks;
-    constructor({ clientId, isDevelopment, devUrl }: WallyConnectorOptions);
+    private verbose;
+    constructor({ clientId, isDevelopment, devUrl, token, verbose, }: WallyConnectorOptions);
     private connectToSharedWorker;
     private handleWorkerMessage;
     private onWorkerMessage;
@@ -41,6 +42,7 @@ declare class WallyConnector {
      */
     request<T extends MethodNameType>(req: RequestObj<T>): Promise<MethodResponse<T> | null>;
     private formatWallyParams;
+    private isJSONContentType;
     private formatWallyResponse;
     /**
      * Method used doing wallet-related actions like requesting accounts

@@ -9,6 +9,8 @@ export declare type WallyConnectorOptions = {
     clientId: string;
     isDevelopment?: boolean;
     devUrl?: string;
+    token?: string;
+    verbose?: boolean;
 };
 export declare type RedirectOptions = {
     closeWindow?: boolean;
@@ -38,6 +40,9 @@ export declare type BlockHash = HexString;
 export declare type TransactionHash = HexString;
 export declare type Signature = HexString;
 export declare type BlockTag = BlockNumber | 'earliest' | 'latest' | 'pending';
+export declare type WTransactionRequest = TransactionRequest & {
+    gas?: HexString;
+};
 export interface UnsignedTypedData {
     types: Record<string, Array<TypedDataField>>;
     primaryType: string;
@@ -50,6 +55,7 @@ export declare enum WallyMethodName {
     PERSONAL_SIGN = "personal_sign",
     SIGN = "eth_sign",
     SIGN_TYPED = "eth_signTypedData",
+    SIGN_TYPED_V4 = "eth_signTypedData_v4",
     SIGN_TRANSACTION = "eth_signTransaction",
     SEND_TRANSACTION = "eth_sendTransaction"
 }
@@ -88,7 +94,8 @@ export declare enum RPCMethodName {
     UNINSTALL_FILTER = "eth_uninstallFilter",
     GET_FILTER_CHANGES = "eth_getFilterChanges",
     GET_FILTER_LOGS = "eth_getFilterLogs",
-    GET_LOGS = "eth_getLogs"
+    GET_LOGS = "eth_getLogs",
+    CHAIN_ID = "eth_chainId"
 }
 export declare type RPCMethodNameType = `${RPCMethodName}`;
 export declare enum UnsupportedMethodName {
@@ -108,11 +115,12 @@ export declare type MethodName = WallyMethodName | RPCMethodName;
 export declare type MethodNameType = WallyMethodNameType | RPCMethodNameType;
 export declare type SignParams = [Address, any];
 export declare type PersonalSignParams = [any, Address];
+export declare type SignTypedParams = [string, UnsignedTypedData | string];
 declare type WallyMethodNoParams = `${WallyMethodName.ACCOUNTS}` | `${WallyMethodName.REQUEST_ACCOUNTS}`;
-export declare type WallyMethodParams<T> = T extends `${WallyMethodName.PERSONAL_SIGN}` ? PersonalSignParams : T extends `${WallyMethodName.SIGN}` ? SignParams : T extends WallyMethodNoParams ? undefined : T extends `${WallyMethodName.SEND_TRANSACTION}` | `${WallyMethodName.SIGN_TRANSACTION}` ? [TransactionRequest] : T extends `${WallyMethodName.SIGN_TYPED}` ? [UnsignedTypedData] : undefined;
-declare type RPCMethodNoParams = `${RPCMethodName.WEB3_CLIENT_VERSION}` | `${RPCMethodName.NET_VERSION}` | `${RPCMethodName.NET_LISTENING}` | `${RPCMethodName.PROFOCOL_VERSION}` | `${RPCMethodName.SYNCING}` | `${RPCMethodName.GAS_PRICE}` | `${RPCMethodName.BLOCK_NUMBER}` | `${RPCMethodName.NEW_BLOCK_FILTER}` | `${RPCMethodName.NEW_PENDING_TRANSACTION_FILTER}`;
+export declare type WallyMethodParams<T> = T extends `${WallyMethodName.PERSONAL_SIGN}` ? PersonalSignParams : T extends `${WallyMethodName.SIGN}` ? SignParams : T extends WallyMethodNoParams ? undefined : T extends `${WallyMethodName.SEND_TRANSACTION}` | `${WallyMethodName.SIGN_TRANSACTION}` ? [TransactionRequest] : T extends `${WallyMethodName.SIGN_TYPED}` | `${WallyMethodName.SIGN_TYPED_V4}` ? SignTypedParams : undefined;
+declare type RPCMethodNoParams = `${RPCMethodName.WEB3_CLIENT_VERSION}` | `${RPCMethodName.NET_VERSION}` | `${RPCMethodName.NET_LISTENING}` | `${RPCMethodName.PROFOCOL_VERSION}` | `${RPCMethodName.SYNCING}` | `${RPCMethodName.GAS_PRICE}` | `${RPCMethodName.BLOCK_NUMBER}` | `${RPCMethodName.NEW_BLOCK_FILTER}` | `${RPCMethodName.NEW_PENDING_TRANSACTION_FILTER}` | `${RPCMethodName.CHAIN_ID}`;
 export declare type RPCMethodParams<T> = T extends RPCMethodNoParams ? undefined : T extends `${RPCMethodName.GET_BALANCE}` | `${RPCMethodName.GET_TRANSACTION_COUNT}` ? [Address, BlockTag] : T extends `${RPCMethodName.GET_STORAGE_AT}` ? [Address, BigNumberish, BlockTag] : T extends `${RPCMethodName.GET_BLOCK_TRANSACTION_COUNT_BY_HASH}` | `${RPCMethodName.GET_UNCLE_COUNT_BY_BLOCK_HASH}` ? [BlockHash] : T extends `${RPCMethodName.GET_BLOCK_TRANSACTION_COUNT_BY_NUMBER}` | `${RPCMethodName.GET_UNCLE_COUNT_BY_BLOCK_NUMBER}` ? [BlockTag] : T extends `${RPCMethodName.GET_CODE}` ? [Address, BlockTag] : T extends `${RPCMethodName.SEND_RAW_TRANSACTION}` ? [Signature] : T extends `${RPCMethodName.CALL}` | `${RPCMethodName.ESTIMATE_GAS}` ? [TransactionRequest] : T extends `${RPCMethodName.GET_BLOCK_BY_HASH}` ? [BlockHash, boolean] : T extends `${RPCMethodName.GET_BLOCK_BY_NUMBER}` ? [BlockTag, boolean] : T extends `${RPCMethodName.GET_TRANSACTION_BY_HASH}` ? [TransactionHash] : T extends `${RPCMethodName.GET_TRANSACTION_BY_BLOCK_HASH_AND_INDEX}` ? [BlockHash, Index] : T extends `${RPCMethodName.GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX}` ? [BlockTag, Index] : T extends `${RPCMethodName.GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX}` ? [BlockTag, Index] : T extends `${RPCMethodName.GET_TRANSACTION_RECEIPT}` ? [TransactionHash] : T extends `${RPCMethodName.GET_UNCLE_BY_BLOCK_HASH_AND_INDEX}` ? [BlockHash, Index] : T extends `${RPCMethodName.GET_UNCLE_BY_BLOCK_NUMBER_AND_INDEX}` ? [BlockTag, Index] : T extends `${RPCMethodName.NEW_FILTER}` ? [Filter] : T extends `${RPCMethodName.UNINSTALL_FILTER}` | `${RPCMethodName.GET_FILTER_CHANGES}` | `${RPCMethodName.GET_FILTER_LOGS}` ? [FilterId] : null;
-export declare type WallyResponse<T> = T extends `${WallyMethodName.SEND_TRANSACTION}` ? TransactionResponse : T extends `${WallyMethodName.PERSONAL_SIGN}` | `${WallyMethodName.SIGN}` | `${WallyMethodName.SIGN_TYPED}` | `${WallyMethodName.SIGN_TRANSACTION}` ? string : T extends `${WallyMethodName.ACCOUNTS}` | `${WallyMethodName.REQUEST_ACCOUNTS}` ? string[] : null;
-export declare type RPCResponse<T> = T extends `${RPCMethodName.NET_LISTENING}` ? boolean : T extends `${RPCMethodName.SYNCING}` ? boolean : T extends `${RPCMethodName.UNINSTALL_FILTER}` ? boolean : T extends `${RPCMethodName.WEB3_CLIENT_VERSION}` ? string : T extends `${RPCMethodName.NET_VERSION}` | `${RPCMethodName.PROFOCOL_VERSION}` | `${RPCMethodName.GAS_PRICE}` | `${RPCMethodName.BLOCK_NUMBER}` | `${RPCMethodName.GET_BALANCE}` | `${RPCMethodName.GET_TRANSACTION_COUNT}` | `${RPCMethodName.GET_STORAGE_AT}` | `${RPCMethodName.GET_BLOCK_TRANSACTION_COUNT_BY_HASH}` | `${RPCMethodName.GET_UNCLE_COUNT_BY_BLOCK_HASH}` | `${RPCMethodName.GET_BLOCK_TRANSACTION_COUNT_BY_NUMBER}` | `${RPCMethodName.GET_UNCLE_COUNT_BY_BLOCK_NUMBER}` | `${RPCMethodName.GET_CODE}` | `${RPCMethodName.CALL}` | `${RPCMethodName.ESTIMATE_GAS}` | `${RPCMethodName.GET_UNCLE_BY_BLOCK_HASH_AND_INDEX}` | `${RPCMethodName.GET_UNCLE_BY_BLOCK_NUMBER_AND_INDEX}` | `${RPCMethodName.NEW_FILTER}` | `${RPCMethodName.NEW_BLOCK_FILTER}` | `${RPCMethodName.NEW_PENDING_TRANSACTION_FILTER}` ? HexString : T extends `${RPCMethodName.GET_FILTER_CHANGES}` ? HexString[] : T extends `${RPCMethodName.SEND_RAW_TRANSACTION}` ? TransactionHash : T extends `${RPCMethodName.GET_BLOCK_BY_HASH}` | `${RPCMethodName.GET_BLOCK_BY_NUMBER}` ? Block : T extends `${RPCMethodName.GET_TRANSACTION_BY_HASH}` | `${RPCMethodName.GET_TRANSACTION_BY_BLOCK_HASH_AND_INDEX}` | `${RPCMethodName.GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX}` | `${RPCMethodName.GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX}` ? TransactionResponse : T extends `${RPCMethodName.GET_TRANSACTION_RECEIPT}` ? TransactionReceipt : T extends `${RPCMethodName.GET_FILTER_LOGS}` ? any : null;
+export declare type WallyResponse<T> = T extends `${WallyMethodName.PERSONAL_SIGN}` | `${WallyMethodName.SIGN}` | `${WallyMethodName.SIGN_TYPED}` | `${WallyMethodName.SIGN_TYPED_V4}` | `${WallyMethodName.SIGN_TRANSACTION}` | `${WallyMethodName.SEND_TRANSACTION}` ? HexString : T extends `${WallyMethodName.ACCOUNTS}` | `${WallyMethodName.REQUEST_ACCOUNTS}` ? string[] : null;
+export declare type RPCResponse<T> = T extends `${RPCMethodName.NET_LISTENING}` ? boolean : T extends `${RPCMethodName.SYNCING}` ? boolean : T extends `${RPCMethodName.UNINSTALL_FILTER}` ? boolean : T extends `${RPCMethodName.WEB3_CLIENT_VERSION}` ? string : T extends `${RPCMethodName.NET_VERSION}` | `${RPCMethodName.PROFOCOL_VERSION}` | `${RPCMethodName.GAS_PRICE}` | `${RPCMethodName.BLOCK_NUMBER}` | `${RPCMethodName.GET_BALANCE}` | `${RPCMethodName.GET_TRANSACTION_COUNT}` | `${RPCMethodName.GET_STORAGE_AT}` | `${RPCMethodName.GET_BLOCK_TRANSACTION_COUNT_BY_HASH}` | `${RPCMethodName.GET_UNCLE_COUNT_BY_BLOCK_HASH}` | `${RPCMethodName.GET_BLOCK_TRANSACTION_COUNT_BY_NUMBER}` | `${RPCMethodName.GET_UNCLE_COUNT_BY_BLOCK_NUMBER}` | `${RPCMethodName.GET_CODE}` | `${RPCMethodName.CALL}` | `${RPCMethodName.ESTIMATE_GAS}` | `${RPCMethodName.GET_UNCLE_BY_BLOCK_HASH_AND_INDEX}` | `${RPCMethodName.GET_UNCLE_BY_BLOCK_NUMBER_AND_INDEX}` | `${RPCMethodName.NEW_FILTER}` | `${RPCMethodName.NEW_BLOCK_FILTER}` | `${RPCMethodName.NEW_PENDING_TRANSACTION_FILTER}` | `${RPCMethodName.CHAIN_ID}` ? HexString : T extends `${RPCMethodName.GET_FILTER_CHANGES}` ? HexString[] : T extends `${RPCMethodName.SEND_RAW_TRANSACTION}` ? TransactionHash : T extends `${RPCMethodName.GET_BLOCK_BY_HASH}` | `${RPCMethodName.GET_BLOCK_BY_NUMBER}` ? Block : T extends `${RPCMethodName.GET_TRANSACTION_BY_HASH}` | `${RPCMethodName.GET_TRANSACTION_BY_BLOCK_HASH_AND_INDEX}` | `${RPCMethodName.GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX}` | `${RPCMethodName.GET_TRANSACTION_BY_BLOCK_NUMBER_AND_INDEX}` ? TransactionResponse : T extends `${RPCMethodName.GET_TRANSACTION_RECEIPT}` ? TransactionReceipt : T extends `${RPCMethodName.GET_FILTER_LOGS}` ? any : null;
 export declare type MethodResponse<T> = WallyResponse<T> | RPCResponse<T>;
 export {};

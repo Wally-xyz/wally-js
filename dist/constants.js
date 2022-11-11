@@ -67,6 +67,7 @@ exports.WALLY_ROUTES = {
     [types_1.WallyMethodName.SIGN]: 'wallet/sign-message',
     [types_1.WallyMethodName.PERSONAL_SIGN]: 'wallet/sign-message',
     [types_1.WallyMethodName.SIGN_TYPED]: 'wallet/sign-typed-data',
+    [types_1.WallyMethodName.SIGN_TYPED_V4]: 'wallet/sign-typed-data',
     [types_1.WallyMethodName.SIGN_TRANSACTION]: 'wallet/sign-transaction',
     [types_1.WallyMethodName.SEND_TRANSACTION]: 'wallet/send-transaction',
 };

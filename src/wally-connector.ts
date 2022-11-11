@@ -8,11 +8,13 @@ import {
   RPCMethodParams,
   RPCResponse,
   SignParams,
+  SignTypedParams,
   WallyConnectorOptions,
   WallyMethodName,
   WallyMethodParams,
   WallyResponse,
   WorkerMessage,
+  WTransactionRequest,
 } from './types';
 
 import {
@@ -23,6 +25,7 @@ import {
   getScrimElement,
   WALLY_ROUTES,
 } from './constants';
+// import { TransactionRequest } from '@ethersproject/providers';
 
 class WallyConnector {
   private clientId: string | null;
@@ -32,18 +35,37 @@ class WallyConnector {
   private didHandleRedirect: boolean;
   private worker: SharedWorker | null;
   private workerCallbacks: Partial<Record<WorkerMessage, Array<() => void>>>;
+  private verbose: boolean;
 
-  constructor({ clientId, isDevelopment, devUrl }: WallyConnectorOptions) {
+  constructor({
+    clientId,
+    isDevelopment,
+    devUrl,
+    token,
+    verbose,
+  }: WallyConnectorOptions) {
     this.clientId = clientId;
     this.host = (isDevelopment && devUrl) || APP_ROOT;
     this.selectedAddress = null;
     this.isDevelopment = !!isDevelopment;
     this.didHandleRedirect = false;
+    this.verbose = !!verbose;
 
     // todo - make path configurable, node_modules maybe?
     this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
     this.connectToSharedWorker();
     this.workerCallbacks = {};
+
+    if (token) {
+      if (!isDevelopment) {
+        console.error('Token may only be used in development mode.');
+      } else {
+        if (verbose) {
+          console.log('Setting auth token');
+        }
+        this.setAuthToken(token);
+      }
+    }
   }
 
   private connectToSharedWorker(): void {
@@ -163,7 +185,7 @@ class WallyConnector {
           authCode,
         }),
       });
-      console.log({ resp });
+
       if (resp && resp?.ok && resp?.status < 300) {
         const data = await resp.json();
         this.setAuthToken(data.token);
@@ -270,27 +292,43 @@ class WallyConnector {
   async request<T extends MethodNameType>(
     req: RequestObj<T>
   ): Promise<MethodResponse<T> | null> {
+    if (this.verbose) {
+      console.log(
+        `wally requesting: ${req.method} w/ params: ${
+          (req as any).params || 'none'
+        }`
+      );
+    }
+
     if (!this.isLoggedIn()) {
       await this.loginWithEmail();
     }
 
+    let res;
     if (this.isWallyMethod(req.method)) {
-      return this.requestWally(
+      res = this.requestWally(
         req.method as WallyMethodName,
         'params' in req ? (req.params as WallyMethodParams<T>) : undefined
       ) as Promise<WallyResponse<T>>;
     } else if (this.isRPCMethod(req.method)) {
-      return this.requestRPC(
+      res = this.requestRPC(
         req.method as RPCMethodName,
         'params' in req ? (req.params as RPCMethodParams<T>) : undefined
       );
     } else {
-      console.error(`Method: ${req.method} is not officially supported by wally at this time, use at your own risk! Contact wally support to get it prioritized.`)
-      return this.requestRPC(
+      console.error(
+        `Method: ${req.method} is not officially supported by wally at this time, use at your own risk! Contact the wally team to get it prioritized.`
+      );
+      res = this.requestRPC(
         req.method as any,
         'params' in req ? (req.params as any) : undefined
       );
     }
+
+    if (this.verbose) {
+      console.log('wally response:', { res });
+    }
+    return res;
   }
 
   private formatWallyParams<T extends WallyMethodName>(
@@ -302,9 +340,38 @@ class WallyConnector {
         return JSON.stringify({ message: (params as SignParams)[1] });
       case WallyMethodName.PERSONAL_SIGN:
         return JSON.stringify({ message: (params as PersonalSignParams)[0] });
+      case WallyMethodName.SIGN_TYPED:
+      case WallyMethodName.SIGN_TYPED_V4: {
+        // NOTE: Requests from opensea are already a json string
+        const data = (params as SignTypedParams)[1];
+        if (typeof data === 'string') {
+          return data;
+        } else return JSON.stringify(data);
+      }
+      case WallyMethodName.SEND_TRANSACTION:
+      case WallyMethodName.SIGN_TRANSACTION: {
+        const { gas, gasLimit, ...txn } = (params as WTransactionRequest[])[0];
+        return JSON.stringify({
+          ...txn,
+          gasLimit: gasLimit || gas,
+        });
+      }
       default:
         return JSON.stringify(params);
     }
+  }
+
+  private isJSONContentType(method: WallyMethodName): boolean {
+    return (
+      [
+        WallyMethodName.SIGN,
+        WallyMethodName.PERSONAL_SIGN,
+        WallyMethodName.SIGN_TYPED,
+        WallyMethodName.SIGN_TYPED_V4,
+        WallyMethodName.SIGN_TRANSACTION,
+        WallyMethodName.SEND_TRANSACTION,
+      ].indexOf(method) > -1
+    );
   }
 
   private formatWallyResponse<T extends WallyMethodName>(
@@ -321,9 +388,14 @@ class WallyConnector {
       case WallyMethodName.SIGN:
       case WallyMethodName.PERSONAL_SIGN:
       case WallyMethodName.SIGN_TRANSACTION:
-      case WallyMethodName.SIGN_TYPED: {
+      case WallyMethodName.SIGN_TYPED:
+      case WallyMethodName.SIGN_TYPED_V4: {
         const { signature } = data;
         return signature;
+      }
+      case WallyMethodName.SEND_TRANSACTION: {
+        const { hash } = data;
+        return hash;
       }
     }
     return null;
@@ -347,7 +419,7 @@ class WallyConnector {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.getAuthToken()}`,
-          ...(method.indexOf('sign') > -1
+          ...(this.isJSONContentType(method)
             ? { 'Content-Type': 'application/json' }
             : {}),
         },
@@ -384,7 +456,6 @@ class WallyConnector {
     method: T,
     params: RPCMethodParams<T>
   ): Promise<RPCResponse<T> | null> {
-    console.log({ method, params });
     try {
       const resp = await fetch(`${this.host}/oauth/wallet/send`, {
         method: 'POST',
@@ -399,7 +470,7 @@ class WallyConnector {
       });
 
       if (!resp.ok || resp.status >= 300) {
-        throw new Error(
+        console.error(
           `Wally server returned a non-successful response when handling method: ${method}`
         );
       }
