@@ -7,6 +7,7 @@ var WorkerMessage;
     WorkerMessage["LOGIN_FAILURE"] = "login-failure";
 })(WorkerMessage = exports.WorkerMessage || (exports.WorkerMessage = {}));
 // "RPC" methods that need information from wally
+// NOTE: SIGN, PERSONAL_SIGN, and SIGN_TYPED all have different metamask versions
 var WallyMethodName;
 (function (WallyMethodName) {
     WallyMethodName["ACCOUNTS"] = "eth_accounts";
@@ -14,6 +15,7 @@ var WallyMethodName;
     WallyMethodName["PERSONAL_SIGN"] = "personal_sign";
     WallyMethodName["SIGN"] = "eth_sign";
     WallyMethodName["SIGN_TYPED"] = "eth_signTypedData";
+    WallyMethodName["SIGN_TYPED_V4"] = "eth_signTypedData_v4";
     WallyMethodName["SIGN_TRANSACTION"] = "eth_signTransaction";
     WallyMethodName["SEND_TRANSACTION"] = "eth_sendTransaction";
 })(WallyMethodName = exports.WallyMethodName || (exports.WallyMethodName = {}));
@@ -54,6 +56,7 @@ var RPCMethodName;
     RPCMethodName["GET_FILTER_CHANGES"] = "eth_getFilterChanges";
     RPCMethodName["GET_FILTER_LOGS"] = "eth_getFilterLogs";
     RPCMethodName["GET_LOGS"] = "eth_getLogs";
+    RPCMethodName["CHAIN_ID"] = "eth_chainId";
 })(RPCMethodName = exports.RPCMethodName || (exports.RPCMethodName = {}));
 // More popular unsupported methods for more explicit error handling
 // TBH might not even need this definition

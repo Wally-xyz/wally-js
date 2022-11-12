@@ -17,9 +17,17 @@ export type SignedMessage = {
 };
 
 export type WallyConnectorOptions = {
+  // The clientId you get when signing up
   clientId: string;
+  // Required when using devUrl or token
   isDevelopment?: boolean;
+  // The local instance of the wally api. APP ROOT used if unset or not dev mode
   devUrl?: string;
+  // If you're testing stuff out in dev mode and don't have access to the
+  // login flow (i.e. chrome extension), but you do have a token, put it here
+  token?: string;
+  // If you want more insight into what's going on (requests and responses)
+  verbose?: boolean;
 };
 
 export type RedirectOptions = {
@@ -35,7 +43,8 @@ export enum WorkerMessage {
 export type RequestObj<T extends MethodNameType> = T extends WallyMethodNameType
   ? WallyRequestObj<T>
   : T extends RPCMethodNameType
-  ? RPCRequestObj<T> : undefined;
+  ? RPCRequestObj<T>
+  : undefined;
 
 export type WallyRequestObj<T extends WallyMethodName | WallyMethodNameType> = {
   method: T;
@@ -64,6 +73,10 @@ export type TransactionHash = HexString;
 export type Signature = HexString;
 export type BlockTag = BlockNumber | 'earliest' | 'latest' | 'pending';
 
+export type WTransactionRequest = TransactionRequest & {
+  gas?: HexString;
+};
+
 // Matches dto in api
 export interface UnsignedTypedData {
   types: Record<string, Array<TypedDataField>>;
@@ -73,12 +86,14 @@ export interface UnsignedTypedData {
 }
 
 // "RPC" methods that need information from wally
+// NOTE: SIGN, PERSONAL_SIGN, and SIGN_TYPED all have different metamask versions
 export enum WallyMethodName {
   ACCOUNTS = 'eth_accounts',
   REQUEST_ACCOUNTS = 'eth_requestAccounts',
   PERSONAL_SIGN = 'personal_sign',
   SIGN = 'eth_sign',
   SIGN_TYPED = 'eth_signTypedData',
+  SIGN_TYPED_V4 = 'eth_signTypedData_v4',
   SIGN_TRANSACTION = 'eth_signTransaction',
   SEND_TRANSACTION = 'eth_sendTransaction',
 }
@@ -121,6 +136,7 @@ export enum RPCMethodName {
   GET_FILTER_CHANGES = 'eth_getFilterChanges',
   GET_FILTER_LOGS = 'eth_getFilterLogs',
   GET_LOGS = 'eth_getLogs',
+  CHAIN_ID = 'eth_chainId',
 }
 
 export type RPCMethodNameType = `${RPCMethodName}`;
@@ -145,10 +161,11 @@ export type MethodName = WallyMethodName | RPCMethodName;
 export type MethodNameType = WallyMethodNameType | RPCMethodNameType;
 export type SignParams = [Address, any];
 export type PersonalSignParams = [any, Address];
+export type SignTypedParams = [string, UnsignedTypedData | string];
 
 type WallyMethodNoParams =
   | `${WallyMethodName.ACCOUNTS}`
-  | `${WallyMethodName.REQUEST_ACCOUNTS}`
+  | `${WallyMethodName.REQUEST_ACCOUNTS}`;
 
 export type WallyMethodParams<T> = T extends `${WallyMethodName.PERSONAL_SIGN}`
   ? PersonalSignParams
@@ -160,8 +177,10 @@ export type WallyMethodParams<T> = T extends `${WallyMethodName.PERSONAL_SIGN}`
       | `${WallyMethodName.SEND_TRANSACTION}`
       | `${WallyMethodName.SIGN_TRANSACTION}`
   ? [TransactionRequest]
-  : T extends `${WallyMethodName.SIGN_TYPED}`
-  ? [UnsignedTypedData]
+  : T extends
+  | `${WallyMethodName.SIGN_TYPED}`
+  | `${WallyMethodName.SIGN_TYPED_V4}`
+  ? SignTypedParams
   : undefined;
 
 type RPCMethodNoParams =
@@ -174,10 +193,13 @@ type RPCMethodNoParams =
   | `${RPCMethodName.BLOCK_NUMBER}`
   | `${RPCMethodName.NEW_BLOCK_FILTER}`
   | `${RPCMethodName.NEW_PENDING_TRANSACTION_FILTER}`
+  | `${RPCMethodName.CHAIN_ID}`;
 
 export type RPCMethodParams<T> = T extends RPCMethodNoParams
   ? undefined
-  : T extends `${RPCMethodName.GET_BALANCE}` | `${RPCMethodName.GET_TRANSACTION_COUNT}`
+  : T extends
+      | `${RPCMethodName.GET_BALANCE}`
+      | `${RPCMethodName.GET_TRANSACTION_COUNT}`
   ? [Address, BlockTag]
   : T extends `${RPCMethodName.GET_STORAGE_AT}`
   ? [Address, BigNumberish, BlockTag]
@@ -222,15 +244,17 @@ export type RPCMethodParams<T> = T extends RPCMethodNoParams
   ? [FilterId]
   : null;
 
-export type WallyResponse<T> = T extends `${WallyMethodName.SEND_TRANSACTION}`
-  ? TransactionResponse
+export type WallyResponse<T> = T extends
+  | `${WallyMethodName.PERSONAL_SIGN}`
+  | `${WallyMethodName.SIGN}`
+  | `${WallyMethodName.SIGN_TYPED}`
+  | `${WallyMethodName.SIGN_TYPED_V4}`
+  | `${WallyMethodName.SIGN_TRANSACTION}`
+  | `${WallyMethodName.SEND_TRANSACTION}`
+  ? HexString
   : T extends
-      | `${WallyMethodName.PERSONAL_SIGN}`
-      | `${WallyMethodName.SIGN}`
-      | `${WallyMethodName.SIGN_TYPED}`
-      | `${WallyMethodName.SIGN_TRANSACTION}`
-  ? string
-  : T extends `${WallyMethodName.ACCOUNTS}` | `${WallyMethodName.REQUEST_ACCOUNTS}`
+      | `${WallyMethodName.ACCOUNTS}`
+      | `${WallyMethodName.REQUEST_ACCOUNTS}`
   ? string[]
   : null;
 
@@ -262,6 +286,7 @@ export type RPCResponse<T> = T extends `${RPCMethodName.NET_LISTENING}`
       | `${RPCMethodName.NEW_FILTER}`
       | `${RPCMethodName.NEW_BLOCK_FILTER}`
       | `${RPCMethodName.NEW_PENDING_TRANSACTION_FILTER}`
+      | `${RPCMethodName.CHAIN_ID}`
   ? HexString
   : T extends `${RPCMethodName.GET_FILTER_CHANGES}`
   ? HexString[]
@@ -279,8 +304,8 @@ export type RPCResponse<T> = T extends `${RPCMethodName.NET_LISTENING}`
   ? TransactionResponse
   : T extends `${RPCMethodName.GET_TRANSACTION_RECEIPT}`
   ? TransactionReceipt
-  // TODO - figure out what the log format is
-  : T extends `${RPCMethodName.GET_FILTER_LOGS}`
+  : // TODO - figure out what the log format is
+  T extends `${RPCMethodName.GET_FILTER_LOGS}`
   ? any
   : null;
 

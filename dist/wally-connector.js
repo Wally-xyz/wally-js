@@ -8,20 +8,44 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const types_1 = require("./types");
 const constants_1 = require("./constants");
+// import { TransactionRequest } from '@ethersproject/providers';
 class WallyConnector {
-    constructor({ clientId, isDevelopment, devUrl }) {
+    constructor({ clientId, isDevelopment, devUrl, token, verbose, }) {
         this.clientId = clientId;
         this.host = (isDevelopment && devUrl) || constants_1.APP_ROOT;
         this.selectedAddress = null;
         this.isDevelopment = !!isDevelopment;
         this.didHandleRedirect = false;
+        this.verbose = !!verbose;
         // todo - make path configurable, node_modules maybe?
         this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
         this.connectToSharedWorker();
         this.workerCallbacks = {};
+        if (token) {
+            if (!isDevelopment) {
+                console.error('Token may only be used in development mode.');
+            }
+            else {
+                if (verbose) {
+                    console.log('Setting auth token');
+                }
+                this.setAuthToken(token);
+            }
+        }
     }
     connectToSharedWorker() {
         if (!this.worker) {
@@ -125,7 +149,6 @@ class WallyConnector {
                         authCode,
                     }),
                 });
-                console.log({ resp });
                 if (resp && (resp === null || resp === void 0 ? void 0 : resp.ok) && (resp === null || resp === void 0 ? void 0 : resp.status) < 300) {
                     const data = yield resp.json();
                     this.setAuthToken(data.token);
@@ -217,19 +240,28 @@ class WallyConnector {
      */
     request(req) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.verbose) {
+                console.log(`wally requesting: ${req.method} w/ params: ${req.params || 'none'}`);
+            }
             if (!this.isLoggedIn()) {
                 console.log('logging in...');
                 yield this.loginWithEmail();
             }
+            let res;
             if (this.isWallyMethod(req.method)) {
-                return this.requestWally(req.method, 'params' in req ? req.params : undefined);
+                res = this.requestWally(req.method, 'params' in req ? req.params : undefined);
             }
             else if (this.isRPCMethod(req.method)) {
-                return this.requestRPC(req.method, 'params' in req ? req.params : undefined);
+                res = this.requestRPC(req.method, 'params' in req ? req.params : undefined);
             }
             else {
-                throw new Error(`Method ${req.method} is unsupported at this time.`);
+                console.error(`Method: ${req.method} is not officially supported by wally at this time, use at your own risk! Contact the wally team to get it prioritized.`);
+                res = this.requestRPC(req.method, 'params' in req ? req.params : undefined);
             }
+            if (this.verbose) {
+                console.log('wally response:', { res });
+            }
+            return res;
         });
     }
     formatWallyParams(method, params) {
@@ -238,9 +270,32 @@ class WallyConnector {
                 return JSON.stringify({ message: params[1] });
             case types_1.WallyMethodName.PERSONAL_SIGN:
                 return JSON.stringify({ message: params[0] });
+            case types_1.WallyMethodName.SIGN_TYPED:
+            case types_1.WallyMethodName.SIGN_TYPED_V4:
+                // NOTE: Requests from opensea are already a json string
+                const data = params[1];
+                if (typeof data === 'string') {
+                    return data;
+                }
+                else
+                    return JSON.stringify(data);
+            case types_1.WallyMethodName.SEND_TRANSACTION:
+            case types_1.WallyMethodName.SIGN_TRANSACTION:
+                const _a = params[0], { gas, gasLimit } = _a, txn = __rest(_a, ["gas", "gasLimit"]);
+                return JSON.stringify(Object.assign(Object.assign({}, txn), { gasLimit: gasLimit || gas }));
             default:
                 return JSON.stringify(params);
         }
+    }
+    isJSONContentType(method) {
+        return ([
+            types_1.WallyMethodName.SIGN,
+            types_1.WallyMethodName.PERSONAL_SIGN,
+            types_1.WallyMethodName.SIGN_TYPED,
+            types_1.WallyMethodName.SIGN_TYPED_V4,
+            types_1.WallyMethodName.SIGN_TRANSACTION,
+            types_1.WallyMethodName.SEND_TRANSACTION,
+        ].indexOf(method) > -1);
     }
     formatWallyResponse(method, data) {
         switch (method) {
@@ -253,9 +308,14 @@ class WallyConnector {
             case types_1.WallyMethodName.SIGN:
             case types_1.WallyMethodName.PERSONAL_SIGN:
             case types_1.WallyMethodName.SIGN_TRANSACTION:
-            case types_1.WallyMethodName.SIGN_TYPED: {
+            case types_1.WallyMethodName.SIGN_TYPED:
+            case types_1.WallyMethodName.SIGN_TYPED_V4: {
                 const { signature } = data;
                 return signature;
+            }
+            case types_1.WallyMethodName.SEND_TRANSACTION: {
+                const { hash } = data;
+                return hash;
             }
         }
         return null;
@@ -272,7 +332,7 @@ class WallyConnector {
         return __awaiter(this, void 0, void 0, function* () {
             let resp;
             try {
-                resp = yield fetch(`${this.host}/oauth/${constants_1.WALLY_ROUTES[method]}`, Object.assign({ method: 'POST', headers: Object.assign({ Authorization: `Bearer ${this.getAuthToken()}` }, (method.indexOf('sign') > -1
+                resp = yield fetch(`${this.host}/oauth/${constants_1.WALLY_ROUTES[method]}`, Object.assign({ method: 'POST', headers: Object.assign({ Authorization: `Bearer ${this.getAuthToken()}` }, (this.isJSONContentType(method)
                         ? { 'Content-Type': 'application/json' }
                         : {})) }, (params &&
                     params.length > 0 && {
@@ -301,7 +361,6 @@ class WallyConnector {
      */
     requestRPC(method, params) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log({ method, params });
             try {
                 const resp = yield fetch(`${this.host}/oauth/wallet/send`, {
                     method: 'POST',
@@ -315,7 +374,7 @@ class WallyConnector {
                     }),
                 });
                 if (!resp.ok || resp.status >= 300) {
-                    throw new Error(`Wally server returned a non-successful response when handling method: ${method}`);
+                    console.error(`Wally server returned a non-successful response when handling method: ${method}`);
                 }
                 const contentType = resp.headers.get('content-type');
                 if (contentType && contentType.indexOf('application/json') !== -1) {
