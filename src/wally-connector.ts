@@ -20,6 +20,7 @@ import {
 import {
   APP_ROOT,
   REDIRECT_CAPTION_ID,
+  SCRIM_ID,
   SCRIM_TEXT_ID,
   getRedirectPage,
   getScrimElement,
@@ -36,6 +37,7 @@ class WallyConnector {
   private worker: SharedWorker | null;
   private workerCallbacks: Partial<Record<WorkerMessage, Array<() => void>>>;
   private verbose: boolean;
+  private rejectLogin: (() => void) | null;
 
   constructor({
     clientId,
@@ -50,6 +52,7 @@ class WallyConnector {
     this.isDevelopment = !!isDevelopment;
     this.didHandleRedirect = false;
     this.verbose = !!verbose;
+    this.rejectLogin = null;
 
     // todo - make path configurable, node_modules maybe?
     this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
@@ -99,6 +102,12 @@ class WallyConnector {
     this.workerCallbacks[message]?.push(fn);
   }
 
+  public onScrimCloseButton() {
+    const scrim = document.getElementById(SCRIM_ID);
+    scrim && scrim.parentElement && scrim.parentElement.removeChild(scrim);
+    this.rejectLogin && this.rejectLogin();
+  }
+
   public async loginWithEmail(): Promise<void> {
     if (!this.clientId) {
       console.error('Please set a client ID');
@@ -114,6 +123,7 @@ class WallyConnector {
     document.body.appendChild(scrim);
 
     return new Promise((resolve, reject) => {
+      this.rejectLogin = reject;
       const updateFailureScrim = () => {
         const scrimText = document.getElementById(SCRIM_TEXT_ID);
         scrimText
@@ -129,7 +139,8 @@ class WallyConnector {
           return;
         }
         resolve();
-        document.body.removeChild(scrim);
+        const scrim = document.getElementById(SCRIM_ID);
+        scrim && scrim.parentElement && scrim.parentElement.removeChild(scrim);
       });
       this.onWorkerMessage(WorkerMessage.LOGIN_FAILURE, () => {
         updateFailureScrim();
