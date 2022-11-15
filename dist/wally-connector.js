@@ -254,7 +254,7 @@ class WallyConnector {
                 res = this.requestRPC(req.method, 'params' in req ? req.params : undefined);
             }
             else {
-                console.error(`Method: ${req.method} is not officially supported by wally at this time, use at your own risk! Contact the wally team to get it prioritized.`);
+                console.warn(`Method: ${req.method} is not officially supported by wally at this time, use at your own risk! Contact the wally team to get it prioritized.`);
                 res = this.requestRPC(req.method, 'params' in req ? req.params : undefined);
             }
             if (this.verbose) {
@@ -270,7 +270,7 @@ class WallyConnector {
             case types_1.WallyMethodName.PERSONAL_SIGN:
                 return JSON.stringify({ message: params[0] });
             case types_1.WallyMethodName.SIGN_TYPED:
-            case types_1.WallyMethodName.SIGN_TYPED_V4:
+            case types_1.WallyMethodName.SIGN_TYPED_V4: {
                 // NOTE: Requests from opensea are already a json string
                 const data = params[1];
                 if (typeof data === 'string') {
@@ -278,10 +278,12 @@ class WallyConnector {
                 }
                 else
                     return JSON.stringify(data);
+            }
             case types_1.WallyMethodName.SEND_TRANSACTION:
-            case types_1.WallyMethodName.SIGN_TRANSACTION:
+            case types_1.WallyMethodName.SIGN_TRANSACTION: {
                 const _a = params[0], { gas, gasLimit } = _a, txn = __rest(_a, ["gas", "gasLimit"]);
                 return JSON.stringify(Object.assign(Object.assign({}, txn), { gasLimit: gasLimit || gas }));
+            }
             default:
                 return JSON.stringify(params);
         }
