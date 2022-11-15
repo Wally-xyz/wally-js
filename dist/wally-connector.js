@@ -22,7 +22,6 @@ var __rest = (this && this.__rest) || function (s, e) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const types_1 = require("./types");
 const constants_1 = require("./constants");
-// import { TransactionRequest } from '@ethersproject/providers';
 class WallyConnector {
     constructor({ clientId, isDevelopment, devUrl, token, verbose, }) {
         this.clientId = clientId;
@@ -31,6 +30,7 @@ class WallyConnector {
         this.isDevelopment = !!isDevelopment;
         this.didHandleRedirect = false;
         this.verbose = !!verbose;
+        this.rejectLogin = null;
         // todo - make path configurable, node_modules maybe?
         this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
         this.connectToSharedWorker();
@@ -84,27 +84,21 @@ class WallyConnector {
             this.saveState(state);
             const queryParams = new URLSearchParams({ clientId: this.clientId, state });
             window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');
-            const scrim = (0, constants_1.getScrimElement)();
-            document.body.appendChild(scrim);
             return new Promise((resolve, reject) => {
-                const updateFailureScrim = () => {
-                    const scrimText = document.getElementById(constants_1.SCRIM_TEXT_ID);
-                    scrimText
-                        ? (scrimText.innerText =
-                            'Error logging in. ☹️\nPlease refresh and try again.')
-                        : {};
+                this.rejectLogin = reject;
+                const logFailure = () => {
+                    console.error('Error logging in to Wally. ☹️\nPlease refresh and try again.');
                 };
                 this.onWorkerMessage(types_1.WorkerMessage.LOGIN_SUCCESS, () => {
                     if (!this.getAuthToken()) {
-                        updateFailureScrim();
+                        logFailure();
                         reject();
                         return;
                     }
                     resolve();
-                    document.body.removeChild(scrim);
                 });
                 this.onWorkerMessage(types_1.WorkerMessage.LOGIN_FAILURE, () => {
-                    updateFailureScrim();
+                    logFailure();
                     reject();
                 });
             });

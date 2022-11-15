@@ -8,6 +8,7 @@ declare class WallyConnector {
     private worker;
     private workerCallbacks;
     private verbose;
+    private rejectLogin;
     constructor({ clientId, isDevelopment, devUrl, token, verbose, }: WallyConnectorOptions);
     private connectToSharedWorker;
     private handleWorkerMessage;
