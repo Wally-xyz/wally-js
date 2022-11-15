@@ -20,13 +20,9 @@ import {
 import {
   APP_ROOT,
   REDIRECT_CAPTION_ID,
-  SCRIM_ID,
-  SCRIM_TEXT_ID,
   getRedirectPage,
-  getScrimElement,
   WALLY_ROUTES,
 } from './constants';
-// import { TransactionRequest } from '@ethersproject/providers';
 
 class WallyConnector {
   private clientId: string | null;
@@ -102,12 +98,6 @@ class WallyConnector {
     this.workerCallbacks[message]?.push(fn);
   }
 
-  public onScrimCloseButton() {
-    const scrim = document.getElementById(SCRIM_ID);
-    scrim && scrim.parentElement && scrim.parentElement.removeChild(scrim);
-    this.rejectLogin && this.rejectLogin();
-  }
-
   public async loginWithEmail(): Promise<void> {
     if (!this.clientId) {
       console.error('Please set a client ID');
@@ -119,31 +109,24 @@ class WallyConnector {
 
     window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');
 
-    const scrim = getScrimElement();
-    document.body.appendChild(scrim);
-
     return new Promise((resolve, reject) => {
       this.rejectLogin = reject;
-      const updateFailureScrim = () => {
-        const scrimText = document.getElementById(SCRIM_TEXT_ID);
-        scrimText
-          ? (scrimText.innerText =
-              'Error logging in. ☹️\nPlease refresh and try again.')
-          : {};
+      const logFailure = () => {
+        console.error(
+          'Error logging in to Wally. ☹️\nPlease refresh and try again.'
+        );
       };
 
       this.onWorkerMessage(WorkerMessage.LOGIN_SUCCESS, () => {
         if (!this.getAuthToken()) {
-          updateFailureScrim();
+          logFailure();
           reject();
           return;
         }
         resolve();
-        const scrim = document.getElementById(SCRIM_ID);
-        scrim && scrim.parentElement && scrim.parentElement.removeChild(scrim);
       });
       this.onWorkerMessage(WorkerMessage.LOGIN_FAILURE, () => {
-        updateFailureScrim();
+        logFailure();
         reject();
       });
     });
