@@ -30,7 +30,11 @@ class WallyConnector {
         this.selectedAddress = null;
         this.isDevelopment = !!isDevelopment;
         this.didHandleRedirect = false;
+<<<<<<< HEAD
         this.verbose = !!verbose;
+=======
+        this.rejectLogin = null;
+>>>>>>> 85675f9 (build)
         // todo - make path configurable, node_modules maybe?
         this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
         this.connectToSharedWorker();
@@ -74,6 +78,11 @@ class WallyConnector {
         }
         (_a = this.workerCallbacks[message]) === null || _a === void 0 ? void 0 : _a.push(fn);
     }
+    onScrimCloseButton() {
+        const scrim = document.getElementById(constants_1.SCRIM_ID);
+        scrim && scrim.parentElement && scrim.parentElement.removeChild(scrim);
+        this.rejectLogin && this.rejectLogin();
+    }
     loginWithEmail() {
         return __awaiter(this, void 0, void 0, function* () {
             if (!this.clientId) {
@@ -87,6 +96,7 @@ class WallyConnector {
             const scrim = (0, constants_1.getScrimElement)();
             document.body.appendChild(scrim);
             return new Promise((resolve, reject) => {
+                this.rejectLogin = reject;
                 const updateFailureScrim = () => {
                     const scrimText = document.getElementById(constants_1.SCRIM_TEXT_ID);
                     scrimText
@@ -101,7 +111,8 @@ class WallyConnector {
                         return;
                     }
                     resolve();
-                    document.body.removeChild(scrim);
+                    const scrim = document.getElementById(constants_1.SCRIM_ID);
+                    scrim && scrim.parentElement && scrim.parentElement.removeChild(scrim);
                 });
                 this.onWorkerMessage(types_1.WorkerMessage.LOGIN_FAILURE, () => {
                     updateFailureScrim();
@@ -254,8 +265,13 @@ class WallyConnector {
                 res = this.requestRPC(req.method, 'params' in req ? req.params : undefined);
             }
             else {
+<<<<<<< HEAD
                 console.warn(`Method: ${req.method} is not officially supported by wally at this time, use at your own risk! Contact the wally team to get it prioritized.`);
                 res = this.requestRPC(req.method, 'params' in req ? req.params : undefined);
+=======
+                console.error(`Method: ${req.method} is not officially supported by wally at this time, use at your own risk! Contact wally support to get it prioritized.`);
+                return this.requestRPC(req.method, 'params' in req ? req.params : undefined);
+>>>>>>> 85675f9 (build)
             }
             if (this.verbose) {
                 console.log('wally response:', { res });

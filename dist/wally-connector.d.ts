@@ -7,11 +7,17 @@ declare class WallyConnector {
     private didHandleRedirect;
     private worker;
     private workerCallbacks;
+<<<<<<< HEAD
     private verbose;
     constructor({ clientId, isDevelopment, devUrl, token, verbose, }: WallyConnectorOptions);
+=======
+    private rejectLogin;
+    constructor({ clientId, isDevelopment, devUrl }: WallyConnectorOptions);
+>>>>>>> 85675f9 (build)
     private connectToSharedWorker;
     private handleWorkerMessage;
     private onWorkerMessage;
+    onScrimCloseButton(): void;
     loginWithEmail(): Promise<void>;
     isRedirected(): boolean;
     isLoggedIn(): boolean;
