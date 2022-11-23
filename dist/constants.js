@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+<<<<<<< HEAD
 exports.WALLY_ROUTES = exports.getRedirectPage = exports.REDIRECT_CAPTION_ID = exports.APP_ROOT = void 0;
 const types_1 = require("./types");
 exports.APP_ROOT = 'https://api.wally.xyz/v1';
@@ -26,6 +27,12 @@ const getRedirectPage = () => {
     return containerEl;
 };
 exports.getRedirectPage = getRedirectPage;
+=======
+exports.WALLY_ROUTES = exports.REDIRECT_CAPTION_ID = exports.APP_ROOT = void 0;
+const types_1 = require("./types");
+exports.APP_ROOT = 'https://api.wally.xyz/v1';
+exports.REDIRECT_CAPTION_ID = 'wally-redirect-caption';
+>>>>>>> 2e97951 (Update SDK for chrome extension demo)
 // TODO: Figure out the difference between sign & personal sign.
 // There might be some prefixing deal in the spec, but right now
 // both of them do. Will probably come back once we test this out

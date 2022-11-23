@@ -17,27 +17,64 @@ export type SignedMessage = {
 };
 
 export type WallyConnectorOptions = {
-  // The clientId you get when signing up
+  /**
+   * The clientId you get when signing up. Should match the dashboard value
+   */
   clientId: string;
-  // Required when using devUrl or token
+  /**
+   * Required when using devUrl.
+   * TODO: Make this better.
+   * @default false
+   */
   isDevelopment?: boolean;
-  // The local instance of the wally api. APP ROOT used if unset or not dev mode
+  /**
+   * The local instance of the wally api. APP ROOT used if unset or not dev mode
+   */
   devUrl?: string;
-  // If you're testing stuff out in dev mode and don't have access to the
-  // login flow (i.e. chrome extension), but you do have a token, put it here
-  token?: string;
-  // If you want more insight into what's going on (requests and responses)
+  /**
+   * If you have another cross-tab messaging solution for informing the primary browser
+   * tab when the secondary
+   * @default false
+   */
+  disableSharedWorker?: boolean;
+  /**
+   * If you want more insight into what's going on (requests and responses)
+   * @default false
+   */
   verbose?: boolean;
   /**
-   * Where the package should look for the shared worker script. Must be set if the shared worker
-   * is enabled, and the location will change likely depending on your framework.
+   * If you'd like to use a more dynamic redirect. Only possible when the
+   * redirectUrl in your dashboard settings is set as a regex.
    */
-  sharedWorkerUrl?: string;
-};
-
-export type RedirectOptions = {
-  closeWindow?: boolean;
-  appendContent?: boolean;
+  redirectURL?: string;
+  /**
+   * Set to true if you'd like the SDK to automatically redirect to the same location
+   * as the primary window. Only possible when the redirectUrl in your dashboard settings
+   * is set as a regex.
+   * @default false
+   */
+  redirectToCurrentLocation?: boolean;
+  /**
+   * Function called after the token is fetched in the redirect. Should be used
+   * when the disableSharedWorker is true - as you'll need some other method of
+   * notifying the main window to complete the login process. Should
+   * be used in conjunction with the `finishLogin()` method.
+   * @param address The connected wallet's address
+   */
+  onTokenFetched?(address: string): void;
+  /**
+   * Disable automatically showing the login window when a request() is made.
+   * The default behavior is to automatically trigger, as that seems to be the
+   * web3 provider standard. If disabled, you will need to call `login()`.
+   * @default false
+   */
+  disableLoginOnRequest?: boolean;
+  /**
+   * Disable automatically closing the redirect window. Shouldn't really be used
+   * outside of the
+   * @default false
+   */
+  disableRedirectClose?: boolean;
 };
 
 export enum WorkerMessage {
