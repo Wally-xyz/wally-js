@@ -1,11 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WALLY_ROUTES = exports.getRedirectPage = exports.SCRIM_TEXT_ID = exports.SCRIM_ID = exports.REDIRECT_CAPTION_ID = exports.APP_ROOT = void 0;
+exports.WALLY_ROUTES = exports.getRedirectPage = exports.REDIRECT_CAPTION_ID = exports.APP_ROOT = void 0;
 const types_1 = require("./types");
 exports.APP_ROOT = 'https://api.wally.xyz/v1';
 exports.REDIRECT_CAPTION_ID = 'wally-redirect-caption';
-exports.SCRIM_ID = 'wally-scrim';
-exports.SCRIM_TEXT_ID = 'wally-scrim-text';
 const getRedirectPage = () => {
     const containerEl = document.createElement('div');
     containerEl.style.position = 'absolute';

@@ -9,10 +9,6 @@
   "scripts": {
     "build": "./node_modules/.bin/tsc --project .",
     "watch": "./node_modules/.bin/tsc --watch --project .",
-    "build:test_page": "./node_modules/.bin/tsc --project . --outDir test_page/public/sdk/dist",
-    "build:test_page:watch": "./node_modules/.bin/tsc --watch --project . --outDir test_page/public/sdk/dist",
-    "build:demo": "./node_modules/.bin/tsc --project . --outDir demo/public/sdk",
-    "build:demo:watch": "./node_modules/.bin/tsc --watch --project . --outDir demo/public/sdk",
     "build:clean": "rimraf dist && yarn build",
     "lint": "eslint src/** demo/pages/** demo/components/** --cache --ext js,ts,jsx,tsx",
     "lint:fix": "yarn lint --fix",

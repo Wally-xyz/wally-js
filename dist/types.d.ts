@@ -11,6 +11,11 @@ export declare type WallyConnectorOptions = {
     devUrl?: string;
     token?: string;
     verbose?: boolean;
+    /**
+     * Where the package should look for the shared worker script. Must be set if the shared worker
+     * is enabled, and the location will change likely depending on your framework.
+     */
+    sharedWorkerUrl?: string;
 };
 export declare type RedirectOptions = {
     closeWindow?: boolean;

@@ -11,7 +11,7 @@ import Metamask from 'icons/Metamask';
 
 import styles from 'styles/Home.module.css';
 
-import { getProvider } from 'wally';
+import { getProvider } from 'wally-sdk';
 
 const Home: React.FC = () => {
   const [isUsingWally, setIsUsingWally] = useState(true);

@@ -6,7 +6,6 @@ A demo app to login and sign an arbitrary message, with both MetaMask and Wally,
 
 - you have the MetaMask extension installed
 - `wally-api` running _(locally, haven't tested prod yet)_
-- redirect url set to `http://localhost:3000/handle-redirect` in the `wallet-dashboard` for your app
 
 ## Install
 
@@ -18,4 +17,4 @@ A demo app to login and sign an arbitrary message, with both MetaMask and Wally,
 
 ## wallet-connector updates
 
-If you make changes to the `wallet-connector`, make sure you run `npm run build:demo` or `npm run build:demo:watch` in the top level project directory to build that package.
+If you make changes to the `wallet-connector`, make sure you run `npm run build` or `npm run watch` in the top level project directory to build that package. It is pulled in with `yarn link wally-sdk`, so if the changes aren't updating, run `yarn link` in the top level directory.

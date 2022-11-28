@@ -41,6 +41,7 @@ class WallyConnector {
     devUrl,
     token,
     verbose,
+    sharedWorkerUrl,
   }: WallyConnectorOptions) {
     this.clientId = clientId;
     this.host = (isDevelopment && devUrl) || APP_ROOT;
@@ -51,7 +52,10 @@ class WallyConnector {
     this.rejectLogin = null;
 
     // todo - make path configurable, node_modules maybe?
-    this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
+    this.worker =
+      SharedWorker && sharedWorkerUrl
+        ? new SharedWorker(sharedWorkerUrl)
+        : null;
     this.connectToSharedWorker();
     this.workerCallbacks = {};
 

@@ -23,7 +23,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const types_1 = require("./types");
 const constants_1 = require("./constants");
 class WallyConnector {
-    constructor({ clientId, isDevelopment, devUrl, token, verbose, }) {
+    constructor({ clientId, isDevelopment, devUrl, token, verbose, sharedWorkerUrl, }) {
         this.clientId = clientId;
         this.host = (isDevelopment && devUrl) || constants_1.APP_ROOT;
         this.selectedAddress = null;
@@ -32,7 +32,10 @@ class WallyConnector {
         this.verbose = !!verbose;
         this.rejectLogin = null;
         // todo - make path configurable, node_modules maybe?
-        this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
+        this.worker =
+            SharedWorker && sharedWorkerUrl
+                ? new SharedWorker(sharedWorkerUrl)
+                : null;
         this.connectToSharedWorker();
         this.workerCallbacks = {};
         if (token) {
