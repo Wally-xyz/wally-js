@@ -75,11 +75,21 @@ export type WallyConnectorOptions = {
    * @default false
    */
   disableRedirectClose?: boolean;
+  /**
+   * Where the package should look for the shared worker script. Must be set if the shared worker
+   * is enabled, and the location will change likely depending on your framework.
+   */
+  sharedWorkerUrl?: string;
 };
 
 export enum WorkerMessage {
   LOGIN_SUCCESS = 'login-success',
   LOGIN_FAILURE = 'login-failure',
+}
+
+export enum EmitterMessage {
+  ACCOUNTS_CHANGED = 'accountsChanged',
+  CONNECTED = 'connected',
 }
 
 export type RequestObj<T extends MethodNameType> = T extends WallyMethodNameType

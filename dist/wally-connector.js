@@ -23,40 +23,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const types_1 = require("./types");
 const constants_1 = require("./constants");
 class WallyConnector {
-<<<<<<< HEAD
-    constructor({ clientId, isDevelopment, devUrl, token, verbose, sharedWorkerUrl, }) {
-        this.clientId = clientId;
-        this.host = (isDevelopment && devUrl) || constants_1.APP_ROOT;
-=======
-    constructor({ clientId, devUrl, disableRedirectClose, disableSharedWorker, isDevelopment, disableLoginOnRequest, onTokenFetched, redirectToCurrentLocation, redirectURL, verbose, }) {
+    constructor({ clientId, devUrl, disableRedirectClose, disableSharedWorker, isDevelopment, disableLoginOnRequest, onTokenFetched, redirectToCurrentLocation, redirectURL, verbose, sharedWorkerUrl, }) {
         // Public
->>>>>>> 2e97951 (Update SDK for chrome extension demo)
         this.selectedAddress = null;
         this.disableRedirectClose = false;
         // Internal State
         this.didHandleRedirect = false;
-<<<<<<< HEAD
-        this.verbose = !!verbose;
-        this.rejectLogin = null;
-        // todo - make path configurable, node_modules maybe?
-        this.worker =
-            SharedWorker && sharedWorkerUrl
-                ? new SharedWorker(sharedWorkerUrl)
-                : null;
-        this.connectToSharedWorker();
-=======
         this.emitterCallbacks = {};
         this.isLoggingIn = false;
         this.worker = null;
->>>>>>> 2e97951 (Update SDK for chrome extension demo)
         this.workerCallbacks = {};
         this.finishLogin = (address) => {
             if (!this.isLoggingIn) {
                 return;
             }
             this.isLoggingIn = false;
-            this.emit('accountsChanged', [address]);
-            this.emit('connected', {});
+            this.emit(types_1.EmitterMessage.ACCOUNTS_CHANGED, address);
+            this.emit(types_1.EmitterMessage.CONNECTED);
         };
         this.getRedirectUrl = () => this.redirectToCurrentLocation
             ? window.location.href
@@ -70,9 +53,8 @@ class WallyConnector {
         this.redirectToCurrentLocation = !!redirectToCurrentLocation;
         this.redirectUrl = redirectURL;
         this.verbose = !!verbose;
-        if (!disableSharedWorker) {
-            // TODO: FIXME!!!!!
-            this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
+        if (!disableSharedWorker && sharedWorkerUrl && SharedWorker) {
+            this.worker = new SharedWorker(sharedWorkerUrl);
             this.connectToSharedWorker();
         }
     }
@@ -96,15 +78,24 @@ class WallyConnector {
     removeAllListeners(name) {
         this.emitterCallbacks[name] = [];
     }
-    emit(message, value) {
+    /**
+     * The function used to call all listeners for a specific messsage.
+     * Does NOT remove them, should be removed with a separate `removeListener()`
+     * or `removeAllListeners` call. There isn't really a well-defined list of
+     * messages to handle, so this is open-ended on purpose.
+     * `accountsChanged` is really the big important one used throughout public apps.
+     * @param message The name of the message we're emitting
+     * @param address [optional] The current wallet address,
+     * only used when handling accountsChanged messages.
+     */
+    emit(message, address) {
         var _a;
+        if (message === types_1.EmitterMessage.ACCOUNTS_CHANGED && !address) {
+            throw new Error('address not provided for emmitting `accountsChanged` message');
+            return;
+        }
         (_a = this.emitterCallbacks[message]) === null || _a === void 0 ? void 0 : _a.forEach((cb) => {
-            if (message === 'accountsChanged') {
-                cb(value);
-            }
-            else {
-                cb();
-            }
+            cb(message === types_1.EmitterMessage.ACCOUNTS_CHANGED ? [address] : undefined);
         });
     }
     connectToSharedWorker() {
@@ -151,10 +142,10 @@ class WallyConnector {
             window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');
             return new Promise((resolve, reject) => {
                 const listener = () => {
-                    this.removeListener('accountsChanged', listener);
+                    this.removeListener(types_1.EmitterMessage.ACCOUNTS_CHANGED, listener);
                     resolve();
                 };
-                this.on('accountsChanged', listener);
+                this.on(types_1.EmitterMessage.ACCOUNTS_CHANGED, listener);
                 const logFailure = () => {
                     console.error('Error logging in to Wally. ☹️\nPlease refresh and try again.');
                 };
@@ -292,7 +283,9 @@ class WallyConnector {
      * @deprecated - see this.request()
      */
     sendAsync(req) {
-        return this.request(req);
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request(req);
+        });
     }
     /**
      * This is the major exposed method for supporting JSON RPC methods
@@ -353,10 +346,10 @@ class WallyConnector {
             }
             else {
                 const listener = () => {
-                    this.removeListener('accountsChanged', listener);
+                    this.removeListener(types_1.EmitterMessage.ACCOUNTS_CHANGED, listener);
                     resolve(this.request(req));
                 };
-                this.on('accountsChanged', listener);
+                this.on(types_1.EmitterMessage.ACCOUNTS_CHANGED, listener);
             }
         });
     }
@@ -447,7 +440,7 @@ class WallyConnector {
             catch (err) {
                 console.error(`Wally server returned error: ${err} when handling method: ${method}`);
             }
-            return Promise.reject(`Invalid response for ${method}`);
+            return Promise.reject(new Error(`Invalid response for ${method}`));
         });
     }
     /**
@@ -487,7 +480,7 @@ class WallyConnector {
             catch (err) {
                 console.error(`Wally server returned error: ${err} when handling method: ${method}`);
             }
-            return Promise.reject(`Invalid response for ${method}`);
+            return Promise.reject(new Error(`Invalid response for ${method}`));
         });
     }
 }

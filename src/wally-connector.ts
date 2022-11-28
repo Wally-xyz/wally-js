@@ -1,4 +1,5 @@
 import {
+  EmitterMessage,
   MethodNameType,
   MethodResponse,
   PersonalSignParams,
@@ -65,17 +66,8 @@ class WallyConnector {
     this.redirectUrl = redirectURL;
     this.verbose = !!verbose;
 
-    // todo - make path configurable, node_modules maybe?
-    this.worker =
-      SharedWorker && sharedWorkerUrl
-        ? new SharedWorker(sharedWorkerUrl)
-        : null;
-    this.connectToSharedWorker();
-    this.workerCallbacks = {};
-
-    if (!disableSharedWorker) {
-      // TODO: FIXME!!!!!
-      this.worker = SharedWorker ? new SharedWorker('/sdk/worker.js') : null;
+    if (!disableSharedWorker && sharedWorkerUrl && SharedWorker) {
+      this.worker = new SharedWorker(sharedWorkerUrl);
       this.connectToSharedWorker();
     }
   }
@@ -85,8 +77,8 @@ class WallyConnector {
       return;
     }
     this.isLoggingIn = false;
-    this.emit('accountsChanged', [address]);
-    this.emit('connected', {});
+    this.emit(EmitterMessage.ACCOUNTS_CHANGED, address);
+    this.emit(EmitterMessage.CONNECTED);
   };
 
   public on(name: string, cb: (a?: any) => void): void {
@@ -111,13 +103,24 @@ class WallyConnector {
     this.emitterCallbacks[name] = [];
   }
 
-  private emit(message: string, value: any): void {
+  /**
+   * The function used to call all listeners for a specific messsage.
+   * Does NOT remove them, should be removed with a separate `removeListener()`
+   * or `removeAllListeners` call. There isn't really a well-defined list of
+   * messages to handle, so this is open-ended on purpose.
+   * `accountsChanged` is really the big important one used throughout public apps.
+   * @param message The name of the message we're emitting
+   * @param address [optional] The current wallet address,
+   * only used when handling accountsChanged messages.
+   */
+  private emit(message: string, address?: string): void {
+    if (message === EmitterMessage.ACCOUNTS_CHANGED && !address) {
+      throw new Error('address not provided for emmitting `accountsChanged` message');
+      return;
+    }
+
     this.emitterCallbacks[message]?.forEach((cb) => {
-      if (message === 'accountsChanged') {
-        cb(value);
-      } else {
-        cb();
-      }
+      cb(message === EmitterMessage.ACCOUNTS_CHANGED ? [address] : undefined);
     });
   }
 
@@ -180,10 +183,10 @@ class WallyConnector {
 
     return new Promise((resolve, reject) => {
       const listener = () => {
-        this.removeListener('accountsChanged', listener);
+        this.removeListener(EmitterMessage.ACCOUNTS_CHANGED, listener);
         resolve();
       };
-      this.on('accountsChanged', listener);
+      this.on(EmitterMessage.ACCOUNTS_CHANGED, listener);
 
       const logFailure = () => {
         console.error(
@@ -344,7 +347,7 @@ class WallyConnector {
   /**
    * @deprecated - see this.request()
    */
-  public sendAsync(req: any): Promise<any> {
+  public async sendAsync(req: any) {
     return this.request(req);
   }
 
@@ -425,10 +428,10 @@ class WallyConnector {
         });
       } else {
         const listener = () => {
-          this.removeListener('accountsChanged', listener);
+          this.removeListener(EmitterMessage.ACCOUNTS_CHANGED, listener);
           resolve(this.request(req));
         };
-        this.on('accountsChanged', listener);
+        this.on(EmitterMessage.ACCOUNTS_CHANGED, listener);
       }
     });
   }
@@ -544,7 +547,7 @@ class WallyConnector {
       );
     }
 
-    return Promise.reject(`Invalid response for ${method}`);
+    return Promise.reject(new Error(`Invalid response for ${method}`));
   }
 
   /**
@@ -590,7 +593,7 @@ class WallyConnector {
         `Wally server returned error: ${err} when handling method: ${method}`
       );
     }
-    return Promise.reject(`Invalid response for ${method}`);
+    return Promise.reject(new Error(`Invalid response for ${method}`));
   }
 }
 

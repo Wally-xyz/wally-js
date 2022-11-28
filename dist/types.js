@@ -1,11 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UnsupportedMethodName = exports.RPCMethodName = exports.WallyMethodName = exports.WorkerMessage = void 0;
+exports.UnsupportedMethodName = exports.RPCMethodName = exports.WallyMethodName = exports.EmitterMessage = exports.WorkerMessage = void 0;
 var WorkerMessage;
 (function (WorkerMessage) {
     WorkerMessage["LOGIN_SUCCESS"] = "login-success";
     WorkerMessage["LOGIN_FAILURE"] = "login-failure";
 })(WorkerMessage = exports.WorkerMessage || (exports.WorkerMessage = {}));
+var EmitterMessage;
+(function (EmitterMessage) {
+    EmitterMessage["ACCOUNTS_CHANGED"] = "accountsChanged";
+    EmitterMessage["CONNECTED"] = "connected";
+})(EmitterMessage = exports.EmitterMessage || (exports.EmitterMessage = {}));
 // "RPC" methods that need information from wally
 // NOTE: SIGN, PERSONAL_SIGN, and SIGN_TYPED all have different metamask versions
 var WallyMethodName;

@@ -32,16 +32,6 @@ export declare type WallyConnectorOptions = {
      */
     verbose?: boolean;
     /**
-<<<<<<< HEAD
-     * Where the package should look for the shared worker script. Must be set if the shared worker
-     * is enabled, and the location will change likely depending on your framework.
-     */
-    sharedWorkerUrl?: string;
-};
-export declare type RedirectOptions = {
-    closeWindow?: boolean;
-    appendContent?: boolean;
-=======
      * If you'd like to use a more dynamic redirect. Only possible when the
      * redirectUrl in your dashboard settings is set as a regex.
      */
@@ -74,11 +64,19 @@ export declare type RedirectOptions = {
      * @default false
      */
     disableRedirectClose?: boolean;
->>>>>>> 2e97951 (Update SDK for chrome extension demo)
+    /**
+     * Where the package should look for the shared worker script. Must be set if the shared worker
+     * is enabled, and the location will change likely depending on your framework.
+     */
+    sharedWorkerUrl?: string;
 };
 export declare enum WorkerMessage {
     LOGIN_SUCCESS = "login-success",
     LOGIN_FAILURE = "login-failure"
+}
+export declare enum EmitterMessage {
+    ACCOUNTS_CHANGED = "accountsChanged",
+    CONNECTED = "connected"
 }
 export declare type RequestObj<T extends MethodNameType> = T extends WallyMethodNameType ? WallyRequestObj<T> : T extends RPCMethodNameType ? RPCRequestObj<T> : undefined;
 export declare type WallyRequestObj<T extends WallyMethodName | WallyMethodNameType> = {

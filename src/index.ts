@@ -39,7 +39,7 @@ export const getProvider = (): WallyConnector | null => {
   return window.wally;
 };
 
-export const login = (): Promise<void> => {
+export const login = async () => {
   if (!checkInjected() || window.wally.isLoggedIn()) {
     return Promise.reject();
   }
@@ -52,5 +52,5 @@ export const finishLogin = (address: string): void => {
     return;
   }
 
-  return window.wally.finishLogin(address);
+  window.wally.finishLogin(address);
 };

@@ -15,19 +15,23 @@ declare class WallyConnector {
     private isLoggingIn;
     private worker;
     private workerCallbacks;
-<<<<<<< HEAD
-    private verbose;
-    private rejectLogin;
-    constructor({ clientId, isDevelopment, devUrl, token, verbose, sharedWorkerUrl, }: WallyConnectorOptions);
-=======
-    constructor({ clientId, devUrl, disableRedirectClose, disableSharedWorker, isDevelopment, disableLoginOnRequest, onTokenFetched, redirectToCurrentLocation, redirectURL, verbose, }: WallyConnectorOptions);
+    constructor({ clientId, devUrl, disableRedirectClose, disableSharedWorker, isDevelopment, disableLoginOnRequest, onTokenFetched, redirectToCurrentLocation, redirectURL, verbose, sharedWorkerUrl, }: WallyConnectorOptions);
     finishLogin: (address: string) => void;
     on(name: string, cb: (a?: any) => void): void;
     addListener(name: string, cb: (a?: any) => void): void;
     removeListener(name: string, fn: any): void;
     removeAllListeners(name: string): void;
+    /**
+     * The function used to call all listeners for a specific messsage.
+     * Does NOT remove them, should be removed with a separate `removeListener()`
+     * or `removeAllListeners` call. There isn't really a well-defined list of
+     * messages to handle, so this is open-ended on purpose.
+     * `accountsChanged` is really the big important one used throughout public apps.
+     * @param message The name of the message we're emitting
+     * @param address [optional] The current wallet address,
+     * only used when handling accountsChanged messages.
+     */
     private emit;
->>>>>>> 2e97951 (Update SDK for chrome extension demo)
     private connectToSharedWorker;
     private handleWorkerMessage;
     private onWorkerMessage;
