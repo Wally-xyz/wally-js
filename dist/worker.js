@@ -2,7 +2,7 @@
 const _self = self;
 _self.ports = [];
 const broadcast = (e) => {
-    _self.ports.forEach(p => p.postMessage(e.data));
+    _self.ports.forEach((p) => p.postMessage(e.data));
 };
 _self.onconnect = function (e) {
     const port = e.ports[0];

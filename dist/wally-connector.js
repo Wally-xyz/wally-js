@@ -23,32 +23,76 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const types_1 = require("./types");
 const constants_1 = require("./constants");
 class WallyConnector {
-    constructor({ clientId, isDevelopment, devUrl, token, verbose, sharedWorkerUrl, }) {
-        this.clientId = clientId;
-        this.host = (isDevelopment && devUrl) || constants_1.APP_ROOT;
+    constructor({ clientId, disableRedirectClose, disableLoginOnRequest, redirectURL, verbose, sharedWorkerUrl, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }) {
+        // Public
         this.selectedAddress = null;
-        this.isDevelopment = !!isDevelopment;
+        this.disableRedirectClose = false;
+        // Internal State
         this.didHandleRedirect = false;
-        this.verbose = !!verbose;
-        this.rejectLogin = null;
-        // todo - make path configurable, node_modules maybe?
-        this.worker =
-            SharedWorker && sharedWorkerUrl
-                ? new SharedWorker(sharedWorkerUrl)
-                : null;
-        this.connectToSharedWorker();
+        this.emitterCallbacks = {};
+        this.isLoggingIn = false;
+        this.worker = null;
         this.workerCallbacks = {};
-        if (token) {
-            if (!isDevelopment) {
-                console.error('Token may only be used in development mode.');
+        this.finishLogin = (address) => {
+            if (!this.isLoggingIn) {
+                return;
             }
-            else {
-                if (verbose) {
-                    console.log('Setting auth token');
-                }
-                this.setAuthToken(token);
-            }
+            this.isLoggingIn = false;
+            this.emit(types_1.EmitterMessage.ACCOUNTS_CHANGED, address);
+            this.emit(types_1.EmitterMessage.CONNECTED);
+        };
+        this.clientId = clientId;
+        this.disableRedirectClose = !!disableRedirectClose;
+        this.host = (_isDevelopment && _devUrl) || constants_1.APP_ROOT;
+        this.isDevelopment = !!_isDevelopment;
+        this.disableLoginOnRequest = disableLoginOnRequest;
+        this.onTokenFetched = _onTokenFetched;
+        this.redirectUrl = redirectURL;
+        this.verbose = !!verbose;
+        if (!_disableSharedWorker && sharedWorkerUrl && SharedWorker) {
+            this.worker = new SharedWorker(sharedWorkerUrl);
+            this.connectToSharedWorker();
         }
+    }
+    on(name, cb) {
+        var _a;
+        if (!this.emitterCallbacks[name]) {
+            this.emitterCallbacks[name] = [];
+        }
+        (_a = this.emitterCallbacks[name]) === null || _a === void 0 ? void 0 : _a.push(cb);
+    }
+    addListener(name, cb) {
+        this.on(name, cb);
+    }
+    removeListener(name, fn) {
+        var _a, _b;
+        const idx = (_a = this.emitterCallbacks[name]) === null || _a === void 0 ? void 0 : _a.indexOf(fn);
+        if (idx && idx > -1) {
+            (_b = this.emitterCallbacks[name]) === null || _b === void 0 ? void 0 : _b.splice(idx, 1);
+        }
+    }
+    removeAllListeners(name) {
+        this.emitterCallbacks[name] = [];
+    }
+    /**
+     * The function used to call all listeners for a specific messsage.
+     * Does NOT remove them, should be removed with a separate `removeListener()`
+     * or `removeAllListeners` call. There isn't really a well-defined list of
+     * messages to handle, so this is open-ended on purpose.
+     * `accountsChanged` is really the big important one used throughout public apps.
+     * @param message The name of the message we're emitting
+     * @param address [optional] The current wallet address,
+     * only used when handling accountsChanged messages.
+     */
+    emit(message, address) {
+        var _a;
+        if (message === types_1.EmitterMessage.ACCOUNTS_CHANGED && !address) {
+            throw new Error('address not provided for emmitting `accountsChanged` message');
+            return;
+        }
+        (_a = this.emitterCallbacks[message]) === null || _a === void 0 ? void 0 : _a.forEach((cb) => {
+            cb(message === types_1.EmitterMessage.ACCOUNTS_CHANGED ? [address] : undefined);
+        });
     }
     connectToSharedWorker() {
         if (!this.worker) {
@@ -77,22 +121,32 @@ class WallyConnector {
         }
         (_a = this.workerCallbacks[message]) === null || _a === void 0 ? void 0 : _a.push(fn);
     }
-    loginWithEmail() {
+    login() {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.isLoggingIn) {
+                return Promise.reject('Already logging in.');
+            }
+            this.isLoggingIn = true;
             if (!this.clientId) {
                 console.error('Please set a client ID');
                 return;
             }
             const state = this.generateStateCode();
             this.saveState(state);
-            const queryParams = new URLSearchParams({ clientId: this.clientId, state });
+            const redirectUrl = this.redirectUrl || null;
+            const queryParams = new URLSearchParams(Object.assign({ clientId: this.clientId, state }, ((redirectUrl && { redirectUrl }) || {})));
             window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');
             return new Promise((resolve, reject) => {
-                this.rejectLogin = reject;
+                const listener = () => {
+                    this.removeListener(types_1.EmitterMessage.ACCOUNTS_CHANGED, listener);
+                    resolve();
+                };
+                this.on(types_1.EmitterMessage.ACCOUNTS_CHANGED, listener);
                 const logFailure = () => {
                     console.error('Error logging in to Wally. ☹️\nPlease refresh and try again.');
                 };
                 this.onWorkerMessage(types_1.WorkerMessage.LOGIN_SUCCESS, () => {
+                    // TODO: This needs to use the emitter. Will fix after restructuring/splitting up.
                     if (!this.getAuthToken()) {
                         logFailure();
                         reject();
@@ -113,15 +167,15 @@ class WallyConnector {
     isLoggedIn() {
         return !!this.getAuthToken();
     }
-    handleRedirect({ closeWindow = false, appendContent = false, }) {
+    isConnected() {
+        return this.isLoggedIn();
+    }
+    handleRedirect() {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.didHandleRedirect) {
                 return;
             }
             this.didHandleRedirect = true;
-            if (appendContent) {
-                document.body.appendChild((0, constants_1.getRedirectPage)());
-            }
             const storedState = this.getState();
             const queryParams = new URLSearchParams(window.location.search);
             if (storedState && storedState !== queryParams.get('state')) {
@@ -149,6 +203,8 @@ class WallyConnector {
                 if (resp && (resp === null || resp === void 0 ? void 0 : resp.ok) && (resp === null || resp === void 0 ? void 0 : resp.status) < 300) {
                     const data = yield resp.json();
                     this.setAuthToken(data.token);
+                    this.selectedAddress = data.wallet;
+                    this.onTokenFetched && this.onTokenFetched(data.wallet);
                 }
                 else {
                     error = yield resp.text();
@@ -177,7 +233,7 @@ class WallyConnector {
                 ? (caption.innerText =
                     'Success. You may now close this page and refresh the app.')
                 : {};
-            if (closeWindow) {
+            if (!this.disableRedirectClose) {
                 window.setTimeout(window.close, 1000);
             }
         });
@@ -220,6 +276,14 @@ class WallyConnector {
         return Object.values(types_1.RPCMethodName).indexOf(name) > -1;
     }
     /**
+     * @deprecated - see this.request()
+     */
+    sendAsync(req) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request(req);
+        });
+    }
+    /**
      * This is the major exposed method for supporting JSON RPC methods
      * and associated wallet/blockchain functionality.
      * There are two main types of requests: those that require wallet info
@@ -241,7 +305,7 @@ class WallyConnector {
                 console.log(`wally requesting: ${req.method} w/ params: ${req.params || 'none'}`);
             }
             if (!this.isLoggedIn()) {
-                yield this.loginWithEmail();
+                return this.deferredRequest(req);
             }
             let res;
             if (this.isWallyMethod(req.method)) {
@@ -258,6 +322,33 @@ class WallyConnector {
                 console.log('wally response:', { res });
             }
             return res;
+        });
+    }
+    /**
+     * The promise for handling when trying to make a request before the user has
+     * logged in. Either:
+     * - trigger a login once (web3 standard), and trigger the request after the
+     *   login is complete (adding requests in the meantime to the emitter queue) OR
+     * - just add all requests to the emitter queue, waiting for the consumer to manually login.
+     * TODO: explore converting to async/await with callbacks to prevent indefinite blocking while
+     * waiting for a message that may potentially never come.
+     * @param req RequestObj
+     * @returns Promise
+     */
+    deferredRequest(req) {
+        return new Promise((resolve, reject) => {
+            if (!this.disableLoginOnRequest && !this.isLoggingIn) {
+                this.login().then(() => {
+                    resolve(this.request(req));
+                });
+            }
+            else {
+                const listener = () => {
+                    this.removeListener(types_1.EmitterMessage.ACCOUNTS_CHANGED, listener);
+                    resolve(this.request(req));
+                };
+                this.on(types_1.EmitterMessage.ACCOUNTS_CHANGED, listener);
+            }
         });
     }
     formatWallyParams(method, params) {
@@ -347,7 +438,7 @@ class WallyConnector {
             catch (err) {
                 console.error(`Wally server returned error: ${err} when handling method: ${method}`);
             }
-            return null;
+            return Promise.reject(new Error(`Invalid response for ${method}`));
         });
     }
     /**
@@ -387,7 +478,7 @@ class WallyConnector {
             catch (err) {
                 console.error(`Wally server returned error: ${err} when handling method: ${method}`);
             }
-            return null;
+            return Promise.reject(new Error(`Invalid response for ${method}`));
         });
     }
 }

@@ -1,22 +1,44 @@
-import { MethodNameType, MethodResponse, RedirectOptions, RequestObj, WallyConnectorOptions } from './types';
+import { MethodNameType, MethodResponse, RequestObj, WallyConnectorOptions } from './types';
 declare class WallyConnector {
+    selectedAddress: string | null;
     private clientId;
+    private disableRedirectClose;
     private host;
     private isDevelopment;
-    selectedAddress: string | null;
+    private disableLoginOnRequest?;
+    private redirectUrl;
+    private verbose;
+    private onTokenFetched?;
     private didHandleRedirect;
+    private emitterCallbacks;
+    private isLoggingIn;
     private worker;
     private workerCallbacks;
-    private verbose;
-    private rejectLogin;
-    constructor({ clientId, isDevelopment, devUrl, token, verbose, sharedWorkerUrl, }: WallyConnectorOptions);
+    constructor({ clientId, disableRedirectClose, disableLoginOnRequest, redirectURL, verbose, sharedWorkerUrl, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }: WallyConnectorOptions);
+    finishLogin: (address: string) => void;
+    on(name: string, cb: (a?: any) => void): void;
+    addListener(name: string, cb: (a?: any) => void): void;
+    removeListener(name: string, fn: any): void;
+    removeAllListeners(name: string): void;
+    /**
+     * The function used to call all listeners for a specific messsage.
+     * Does NOT remove them, should be removed with a separate `removeListener()`
+     * or `removeAllListeners` call. There isn't really a well-defined list of
+     * messages to handle, so this is open-ended on purpose.
+     * `accountsChanged` is really the big important one used throughout public apps.
+     * @param message The name of the message we're emitting
+     * @param address [optional] The current wallet address,
+     * only used when handling accountsChanged messages.
+     */
+    private emit;
     private connectToSharedWorker;
     private handleWorkerMessage;
     private onWorkerMessage;
-    loginWithEmail(): Promise<void>;
+    login(): Promise<void>;
     isRedirected(): boolean;
     isLoggedIn(): boolean;
-    handleRedirect({ closeWindow, appendContent, }: RedirectOptions): Promise<void>;
+    isConnected(): boolean;
+    handleRedirect(): Promise<void>;
     private setAuthToken;
     private getAuthToken;
     private generateStateCode;
@@ -25,6 +47,10 @@ declare class WallyConnector {
     private deleteState;
     private isWallyMethod;
     private isRPCMethod;
+    /**
+     * @deprecated - see this.request()
+     */
+    sendAsync(req: any): Promise<any>;
     /**
      * This is the major exposed method for supporting JSON RPC methods
      * and associated wallet/blockchain functionality.
@@ -42,6 +68,18 @@ declare class WallyConnector {
      * @see https://ethereum.org/en/developers/docs/apis/json-rpc/#json-rpc-methods
      */
     request<T extends MethodNameType>(req: RequestObj<T>): Promise<MethodResponse<T> | null>;
+    /**
+     * The promise for handling when trying to make a request before the user has
+     * logged in. Either:
+     * - trigger a login once (web3 standard), and trigger the request after the
+     *   login is complete (adding requests in the meantime to the emitter queue) OR
+     * - just add all requests to the emitter queue, waiting for the consumer to manually login.
+     * TODO: explore converting to async/await with callbacks to prevent indefinite blocking while
+     * waiting for a message that may potentially never come.
+     * @param req RequestObj
+     * @returns Promise
+     */
+    private deferredRequest;
     private formatWallyParams;
     private isJSONContentType;
     private formatWallyResponse;

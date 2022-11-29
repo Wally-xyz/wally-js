@@ -1,36 +1,53 @@
-import {
-  WallyConnectorOptions,
-  RedirectOptions,
-} from './types';
+import { WallyConnectorOptions } from './types';
 
 import WallyConnector from './wally-connector';
 
+let wally: WallyConnector | null = null;
 
-declare global {
-  // eslint-disable-next-line no-var
-  var wally: WallyConnector
-}
+const checkInjected = () => {
+  if (!wally) {
+    console.error(
+      "Couldn't find wally instance. Ensure init() method is called first."
+    );
+    return false;
+  }
+  return true;
+};
 
 export const init = (options: WallyConnectorOptions): void => {
   if (typeof window === 'undefined') {
     console.error('Ensure init() is called on the client only.');
     return;
   }
-  window.wally = window.wally || new WallyConnector(options);
+  wally = wally || new WallyConnector(options);
+
+  if (wally.isRedirected()) {
+    wally.handleRedirect();
+  }
+
+  return;
 };
 
-export const handleRedirect = (options: RedirectOptions): void => {
-  if (!window.wally) {
-    console.error('Couldn\'t find wally instance. Ensure init() method is called first.');
-    return;
-  }
-  window.wally.handleRedirect(options);
-}
-
 export const getProvider = (): WallyConnector | null => {
-  if (!window.wally) {
-    console.error('Couldn\'t find wally instance. Ensure init() method is called first.');
+  if (!checkInjected()) {
     return null;
   }
-  return window.wally;
-}
+
+  return wally;
+};
+
+export const login = async () => {
+  if (!checkInjected() || (wally && wally.isLoggedIn())) {
+    return Promise.reject();
+  }
+
+  return wally!.login();
+};
+
+export const finishLogin = (address: string): void => {
+  if (!checkInjected()) {
+    return;
+  }
+
+  wally!.finishLogin(address);
+};

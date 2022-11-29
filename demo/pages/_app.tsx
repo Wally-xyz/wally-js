@@ -13,9 +13,10 @@ const MyApp: React.FC<LayoutProps> = ({ Component, pageProps }) => {
   if (typeof window !== 'undefined') {
     init({
       clientId: process.env.NEXT_PUBLIC_CLIENT_ID,
-      isDevelopment: true,
-      devUrl: process.env.NEXT_PUBLIC_DEV_URL,
+      redirectURL: window.location.href,
       sharedWorkerUrl: '/worker.js',
+      _isDevelopment: true,
+      _devUrl: process.env.NEXT_PUBLIC_DEV_URL,
     });
   }
 
