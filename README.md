@@ -46,7 +46,7 @@ web3.eth.requestAccounts().then((res) => {
 });
 ```
 
-This will automatically prompt the login window (if not logged in to wally) and resolve the promise with the result. This login flow will also happen with any other request. Alternatively, you can call `wallyProvider.login()` directly if you need more control over the login flow.
+If not logged in to wally, this will automatically prompt the login window and resolve the promise with the result. This login flow will also happen with any other request. Alternatively, you can call `wallyProvider.login()` directly if you need more control over the login flow.
 
 Once your provider is configured, the rest of your app should work exactly the same way that it might work with Metamask or WalletConnect and no other changes should be necessary.
 
@@ -71,6 +71,6 @@ To build the `dist/` dir:
 To watch:
 `npm run build:demo:watch`
 
-...check out the `README` in demo/ for the demo instructions.
+...check out the `README` in demo/ folder for the demo instructions.
 
 If the demo isn't picking up changes, you may need to run `yarn link` in this directory first.
