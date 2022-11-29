@@ -23,7 +23,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const types_1 = require("./types");
 const constants_1 = require("./constants");
 class WallyConnector {
-    constructor({ clientId, devUrl, disableRedirectClose, disableSharedWorker, isDevelopment, disableLoginOnRequest, onTokenFetched, redirectToCurrentLocation, redirectURL, verbose, sharedWorkerUrl, }) {
+    constructor({ clientId, disableRedirectClose, disableLoginOnRequest, redirectURL, verbose, sharedWorkerUrl, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }) {
         // Public
         this.selectedAddress = null;
         this.disableRedirectClose = false;
@@ -41,19 +41,15 @@ class WallyConnector {
             this.emit(types_1.EmitterMessage.ACCOUNTS_CHANGED, address);
             this.emit(types_1.EmitterMessage.CONNECTED);
         };
-        this.getRedirectUrl = () => this.redirectToCurrentLocation
-            ? window.location.href
-            : this.redirectUrl || null;
         this.clientId = clientId;
         this.disableRedirectClose = !!disableRedirectClose;
-        this.host = (isDevelopment && devUrl) || constants_1.APP_ROOT;
-        this.isDevelopment = !!isDevelopment;
+        this.host = (_isDevelopment && _devUrl) || constants_1.APP_ROOT;
+        this.isDevelopment = !!_isDevelopment;
         this.disableLoginOnRequest = disableLoginOnRequest;
-        this.onTokenFetched = onTokenFetched;
-        this.redirectToCurrentLocation = !!redirectToCurrentLocation;
+        this.onTokenFetched = _onTokenFetched;
         this.redirectUrl = redirectURL;
         this.verbose = !!verbose;
-        if (!disableSharedWorker && sharedWorkerUrl && SharedWorker) {
+        if (!_disableSharedWorker && sharedWorkerUrl && SharedWorker) {
             this.worker = new SharedWorker(sharedWorkerUrl);
             this.connectToSharedWorker();
         }
@@ -137,7 +133,7 @@ class WallyConnector {
             }
             const state = this.generateStateCode();
             this.saveState(state);
-            const redirectUrl = this.getRedirectUrl();
+            const redirectUrl = this.redirectUrl || null;
             const queryParams = new URLSearchParams(Object.assign({ clientId: this.clientId, state }, ((redirectUrl && { redirectUrl }) || {})));
             window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');
             return new Promise((resolve, reject) => {

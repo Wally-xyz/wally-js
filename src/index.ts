@@ -2,13 +2,10 @@ import { WallyConnectorOptions } from './types';
 
 import WallyConnector from './wally-connector';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var wally: WallyConnector;
-}
+let wally: WallyConnector | null = null;
 
 const checkInjected = () => {
-  if (!window.wally) {
+  if (!wally) {
     console.error(
       "Couldn't find wally instance. Ensure init() method is called first."
     );
@@ -22,10 +19,10 @@ export const init = (options: WallyConnectorOptions): void => {
     console.error('Ensure init() is called on the client only.');
     return;
   }
-  window.wally = window.wally || new WallyConnector(options);
+  wally = wally || new WallyConnector(options);
 
-  if (window.wally.isRedirected()) {
-    window.wally.handleRedirect();
+  if (wally.isRedirected()) {
+    wally.handleRedirect();
   }
 
   return;
@@ -36,15 +33,15 @@ export const getProvider = (): WallyConnector | null => {
     return null;
   }
 
-  return window.wally;
+  return wally;
 };
 
 export const login = async () => {
-  if (!checkInjected() || window.wally.isLoggedIn()) {
+  if (!checkInjected() || (wally && wally.isLoggedIn())) {
     return Promise.reject();
   }
 
-  return window.wally.login();
+  return wally!.login();
 };
 
 export const finishLogin = (address: string): void => {
@@ -52,5 +49,5 @@ export const finishLogin = (address: string): void => {
     return;
   }
 
-  window.wally.finishLogin(address);
+  wally!.finishLogin(address);
 };

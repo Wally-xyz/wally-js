@@ -14,8 +14,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.finishLogin = exports.login = exports.getProvider = exports.init = void 0;
 const wally_connector_1 = __importDefault(require("./wally-connector"));
+let wally = null;
 const checkInjected = () => {
-    if (!window.wally) {
+    if (!wally) {
         console.error("Couldn't find wally instance. Ensure init() method is called first.");
         return false;
     }
@@ -26,9 +27,9 @@ const init = (options) => {
         console.error('Ensure init() is called on the client only.');
         return;
     }
-    window.wally = window.wally || new wally_connector_1.default(options);
-    if (window.wally.isRedirected()) {
-        window.wally.handleRedirect();
+    wally = wally || new wally_connector_1.default(options);
+    if (wally.isRedirected()) {
+        wally.handleRedirect();
     }
     return;
 };
@@ -37,21 +38,21 @@ const getProvider = () => {
     if (!checkInjected()) {
         return null;
     }
-    return window.wally;
+    return wally;
 };
 exports.getProvider = getProvider;
 const login = () => __awaiter(void 0, void 0, void 0, function* () {
-    if (!checkInjected() || window.wally.isLoggedIn()) {
+    if (!checkInjected() || (wally && wally.isLoggedIn())) {
         return Promise.reject();
     }
-    return window.wally.login();
+    return wally.login();
 });
 exports.login = login;
 const finishLogin = (address) => {
     if (!checkInjected()) {
         return;
     }
-    window.wally.finishLogin(address);
+    wally.finishLogin(address);
 };
 exports.finishLogin = finishLogin;
 //# sourceMappingURL=index.js.map

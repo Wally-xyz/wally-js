@@ -6,16 +6,15 @@ declare class WallyConnector {
     private host;
     private isDevelopment;
     private disableLoginOnRequest?;
-    private onTokenFetched?;
-    private redirectToCurrentLocation;
     private redirectUrl;
     private verbose;
+    private onTokenFetched?;
     private didHandleRedirect;
     private emitterCallbacks;
     private isLoggingIn;
     private worker;
     private workerCallbacks;
-    constructor({ clientId, devUrl, disableRedirectClose, disableSharedWorker, isDevelopment, disableLoginOnRequest, onTokenFetched, redirectToCurrentLocation, redirectURL, verbose, sharedWorkerUrl, }: WallyConnectorOptions);
+    constructor({ clientId, disableRedirectClose, disableLoginOnRequest, redirectURL, verbose, sharedWorkerUrl, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }: WallyConnectorOptions);
     finishLogin: (address: string) => void;
     on(name: string, cb: (a?: any) => void): void;
     addListener(name: string, cb: (a?: any) => void): void;
@@ -35,7 +34,6 @@ declare class WallyConnector {
     private connectToSharedWorker;
     private handleWorkerMessage;
     private onWorkerMessage;
-    private getRedirectUrl;
     login(): Promise<void>;
     isRedirected(): boolean;
     isLoggedIn(): boolean;

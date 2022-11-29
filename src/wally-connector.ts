@@ -29,10 +29,9 @@ class WallyConnector {
   private host: string | null;
   private isDevelopment: boolean;
   private disableLoginOnRequest?: boolean;
-  private onTokenFetched?: (address: string) => void;
-  private redirectToCurrentLocation: boolean;
   private redirectUrl: string | undefined;
   private verbose: boolean;
+  private onTokenFetched?: (address: string) => void;
 
   // Internal State
   private didHandleRedirect = false;
@@ -45,28 +44,26 @@ class WallyConnector {
 
   constructor({
     clientId,
-    devUrl,
     disableRedirectClose,
-    disableSharedWorker,
-    isDevelopment,
     disableLoginOnRequest,
-    onTokenFetched,
-    redirectToCurrentLocation,
     redirectURL,
     verbose,
     sharedWorkerUrl,
+    _devUrl,
+    _disableSharedWorker,
+    _isDevelopment,
+    _onTokenFetched,
   }: WallyConnectorOptions) {
     this.clientId = clientId;
     this.disableRedirectClose = !!disableRedirectClose;
-    this.host = (isDevelopment && devUrl) || APP_ROOT;
-    this.isDevelopment = !!isDevelopment;
+    this.host = (_isDevelopment && _devUrl) || APP_ROOT;
+    this.isDevelopment = !!_isDevelopment;
     this.disableLoginOnRequest = disableLoginOnRequest;
-    this.onTokenFetched = onTokenFetched;
-    this.redirectToCurrentLocation = !!redirectToCurrentLocation;
+    this.onTokenFetched = _onTokenFetched;
     this.redirectUrl = redirectURL;
     this.verbose = !!verbose;
 
-    if (!disableSharedWorker && sharedWorkerUrl && SharedWorker) {
+    if (!_disableSharedWorker && sharedWorkerUrl && SharedWorker) {
       this.worker = new SharedWorker(sharedWorkerUrl);
       this.connectToSharedWorker();
     }
@@ -115,7 +112,9 @@ class WallyConnector {
    */
   private emit(message: string, address?: string): void {
     if (message === EmitterMessage.ACCOUNTS_CHANGED && !address) {
-      throw new Error('address not provided for emmitting `accountsChanged` message');
+      throw new Error(
+        'address not provided for emmitting `accountsChanged` message'
+      );
       return;
     }
 
@@ -155,11 +154,6 @@ class WallyConnector {
     this.workerCallbacks[message]?.push(fn);
   }
 
-  private getRedirectUrl = (): string | null =>
-    this.redirectToCurrentLocation
-      ? window.location.href
-      : this.redirectUrl || null;
-
   public async login(): Promise<void> {
     if (this.isLoggingIn) {
       return Promise.reject('Already logging in.');
@@ -172,7 +166,7 @@ class WallyConnector {
     }
     const state = this.generateStateCode();
     this.saveState(state);
-    const redirectUrl = this.getRedirectUrl();
+    const redirectUrl = this.redirectUrl || null;
     const queryParams = new URLSearchParams({
       clientId: this.clientId,
       state,
