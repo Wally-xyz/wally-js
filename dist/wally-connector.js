@@ -330,6 +330,8 @@ class WallyConnector {
      * - trigger a login once (web3 standard), and trigger the request after the
      *   login is complete (adding requests in the meantime to the emitter queue) OR
      * - just add all requests to the emitter queue, waiting for the consumer to manually login.
+     * TODO: explore converting to async/await with callbacks to prevent indefinite blocking while
+     * waiting for a message that may potentially never come.
      * @param req RequestObj
      * @returns Promise
      */
