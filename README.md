@@ -28,28 +28,6 @@ const MyApp: React.FC<LayoutProps> = ({ Component, pageProps }) => {
 export default MyApp;
 ```
 
-You’ll also need to set up an empty page route (inside your app) that corresponds to the redirect url you’ve set up in the dashboard. The purpose of this page is to accept the token from Wally and turn it into an auth token. The handleRedirect generates a sweet lookin’ page that automatically closes, and if you have some special redirect logic you can do that too to return the user to their previous location within your app.
-
-pages/redirect-page/index.tsx
-
-```
-...
-import { handleRedirect } from 'wally';
-
-const HandleRedirect: React.FC = () => {
- if (typeof window !== 'undefined') {
-   handleRedirect({
-     closeWindow: true,
-     appendContent: true,
-   });
- }
-
- return null;
-};
-
-export default HandleRedirect;
-```
-
 Then, use the provider in the same manner you would use window.ethereum from metamask, or any other ethereum provider that matches the EIP-1193 spec. The most common way of connecting and getting started is by fetching the wallet address:
 
 ```
@@ -68,7 +46,7 @@ web3.eth.requestAccounts().then((res) => {
 });
 ```
 
-This will automatically prompt the login window (if not logged in to wally) and resolve the promise with the result. This login flow will also happen with any other request.
+If not logged in to wally, this will automatically prompt the login window and resolve the promise with the result. This login flow will also happen with any other request. Alternatively, you can call `wallyProvider.login()` directly if you need more control over the login flow.
 
 Once your provider is configured, the rest of your app should work exactly the same way that it might work with Metamask or WalletConnect and no other changes should be necessary.
 
@@ -90,13 +68,9 @@ To build the `dist/` dir:
 
 `npm run build`
 
-#### For the Demo Project
-
-To build and put it in the demo's `public/` dir
-
-`npm run build:demo`
-
 To watch:
 `npm run build:demo:watch`
 
-...check out the `README` in demo/ for the demo instructions
+...check out the `README` in demo/ folder for the demo instructions.
+
+If the demo isn't picking up changes, you may need to run `yarn link` in this directory first.

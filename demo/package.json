@@ -19,6 +19,7 @@
   "devDependencies": {
     "@types/node": "^18.8.4",
     "@types/react": "^18.0.21",
+    "copy-webpack-plugin": "6.2.1",
     "eslint": "8.22.0",
     "eslint-config-next": "12.2.5"
   }

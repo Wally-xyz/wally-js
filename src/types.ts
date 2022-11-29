@@ -28,6 +28,11 @@ export type WallyConnectorOptions = {
   token?: string;
   // If you want more insight into what's going on (requests and responses)
   verbose?: boolean;
+  /**
+   * Where the package should look for the shared worker script. Must be set if the shared worker
+   * is enabled, and the location will change likely depending on your framework.
+   */
+  sharedWorkerUrl?: string;
 };
 
 export type RedirectOptions = {
@@ -178,8 +183,8 @@ export type WallyMethodParams<T> = T extends `${WallyMethodName.PERSONAL_SIGN}`
       | `${WallyMethodName.SIGN_TRANSACTION}`
   ? [TransactionRequest]
   : T extends
-  | `${WallyMethodName.SIGN_TYPED}`
-  | `${WallyMethodName.SIGN_TYPED_V4}`
+      | `${WallyMethodName.SIGN_TYPED}`
+      | `${WallyMethodName.SIGN_TYPED_V4}`
   ? SignTypedParams
   : undefined;
 

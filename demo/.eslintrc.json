@@ -1,6 +1,6 @@
 {
   "extends": ["plugin:@next/next/recommended"],
-  "ignorePatterns": ["public/*"],
+  "ignorePatterns": ["public/*", "next.config.js"],
   "rules": {
     "@next/next/no-html-link-for-pages": ["error", "."],
     "@typescript-eslint/no-explicit-any": "off"

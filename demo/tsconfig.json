@@ -15,9 +15,6 @@
     "jsx": "preserve",
     "moduleResolution": "node",
     "baseUrl": ".",
-    "paths": {
-      "wally": ["public/sdk"]
-    }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]
