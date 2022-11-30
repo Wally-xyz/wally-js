@@ -154,7 +154,7 @@ class WallyConnector {
     this.workerCallbacks[message]?.push(fn);
   }
 
-  public async login(): Promise<void> {
+  public async login(email?: string): Promise<void> {
     if (this.isLoggingIn) {
       return Promise.reject('Already logging in.');
     }
@@ -171,6 +171,7 @@ class WallyConnector {
       clientId: this.clientId,
       state,
       ...((redirectUrl && { redirectUrl }) || {}),
+      ...((email && { email }) || {}),
     });
 
     window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');

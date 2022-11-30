@@ -43,11 +43,17 @@ const getProvider = (supress) => {
     return wally;
 };
 exports.getProvider = getProvider;
-const login = () => __awaiter(void 0, void 0, void 0, function* () {
+/**
+ * Must be used if `disableLoginOnRequest` is true.
+ * Can optionally pass in an email to sign up. [wip]
+ * @param email
+ * @returns
+ */
+const login = (email) => __awaiter(void 0, void 0, void 0, function* () {
     if (!checkInjected() || (wally && wally.isLoggedIn())) {
         return Promise.reject();
     }
-    return wally.login();
+    return wally.login(email);
 });
 exports.login = login;
 const finishLogin = (address) => {
