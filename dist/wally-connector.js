@@ -305,6 +305,11 @@ class WallyConnector {
                 console.log(`wally requesting: ${req.method} w/ params: ${req.params || 'none'}`);
             }
             if (!this.isLoggedIn()) {
+                // bandaid for courtyard, etc.
+                // (eth_accounts might just be for checking loggedin status)
+                if (req.method === types_1.WallyMethodName.ACCOUNTS) {
+                    return Promise.resolve([]);
+                }
                 return this.deferredRequest(req);
             }
             let res;
@@ -337,11 +342,7 @@ class WallyConnector {
      */
     deferredRequest(req) {
         return new Promise((resolve, reject) => {
-            if (!this.disableLoginOnRequest &&
-                !this.isLoggingIn &&
-                // bandaid for courtyard, etc.
-                // (eth_accounts might just be for checking loggedin status)
-                req.method !== types_1.WallyMethodName.ACCOUNTS) {
+            if (!this.disableLoginOnRequest && !this.isLoggingIn) {
                 this.login().then(() => {
                     resolve(this.request(req));
                 });
