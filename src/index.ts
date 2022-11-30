@@ -38,12 +38,18 @@ export const getProvider = (supress?: boolean): WallyConnector | null => {
   return wally;
 };
 
-export const login = async () => {
+/**
+ * Must be used if `disableLoginOnRequest` is true.
+ * Can optionally pass in an email to sign up. [wip]
+ * @param email
+ * @returns
+ */
+export const login = async (email?: string) => {
   if (!checkInjected() || (wally && wally.isLoggedIn())) {
     return Promise.reject();
   }
 
-  return wally!.login();
+  return wally!.login(email);
 };
 
 export const finishLogin = (address: string): void => {

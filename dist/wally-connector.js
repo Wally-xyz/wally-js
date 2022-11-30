@@ -121,7 +121,7 @@ class WallyConnector {
         }
         (_a = this.workerCallbacks[message]) === null || _a === void 0 ? void 0 : _a.push(fn);
     }
-    login() {
+    login(email) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.isLoggingIn) {
                 return Promise.reject('Already logging in.');
@@ -134,7 +134,7 @@ class WallyConnector {
             const state = this.generateStateCode();
             this.saveState(state);
             const redirectUrl = this.redirectUrl || null;
-            const queryParams = new URLSearchParams(Object.assign({ clientId: this.clientId, state }, ((redirectUrl && { redirectUrl }) || {})));
+            const queryParams = new URLSearchParams(Object.assign(Object.assign({ clientId: this.clientId, state }, ((redirectUrl && { redirectUrl }) || {})), ((email && { email }) || {})));
             window.open(`${this.host}/oauth/otp?${queryParams.toString()}`, '_blank');
             return new Promise((resolve, reject) => {
                 const listener = () => {

@@ -34,7 +34,7 @@ declare class WallyConnector {
     private connectToSharedWorker;
     private handleWorkerMessage;
     private onWorkerMessage;
-    login(): Promise<void>;
+    login(email?: string): Promise<void>;
     isRedirected(): boolean;
     isLoggedIn(): boolean;
     isConnected(): boolean;
