@@ -373,6 +373,11 @@ class WallyConnector {
     }
 
     if (!this.isLoggedIn()) {
+      // bandaid for courtyard, etc.
+      // (eth_accounts might just be for checking loggedin status)
+      if (req.method === WallyMethodName.ACCOUNTS) {
+        return Promise.resolve([] as any);
+      }
       return this.deferredRequest(req);
     }
 
