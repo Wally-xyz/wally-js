@@ -15,9 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.finishLogin = exports.login = exports.getProvider = exports.init = void 0;
 const wally_connector_1 = __importDefault(require("./wally-connector"));
 let wally = null;
-const checkInjected = () => {
+const checkInjected = (supress) => {
     if (!wally) {
-        console.error("Couldn't find wally instance. Ensure init() method is called first.");
+        if (!supress) {
+            console.error("Couldn't find wally instance. Ensure init() method is called first.");
+        }
         return false;
     }
     return true;
@@ -34,8 +36,8 @@ const init = (options) => {
     return;
 };
 exports.init = init;
-const getProvider = () => {
-    if (!checkInjected()) {
+const getProvider = (supress) => {
+    if (!checkInjected(supress)) {
         return null;
     }
     return wally;

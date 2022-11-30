@@ -418,7 +418,13 @@ class WallyConnector {
     req: RequestObj<T>
   ): Promise<MethodResponse<T> | null> {
     return new Promise((resolve, reject) => {
-      if (!this.disableLoginOnRequest && !this.isLoggingIn) {
+      if (
+        !this.disableLoginOnRequest &&
+        !this.isLoggingIn &&
+        // bandaid for courtyard, etc.
+        // (eth_accounts might just be for checking loggedin status)
+        req.method !== WallyMethodName.ACCOUNTS
+      ) {
         this.login().then(() => {
           resolve(this.request(req));
         });

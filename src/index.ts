@@ -4,11 +4,13 @@ import WallyConnector from './wally-connector';
 
 let wally: WallyConnector | null = null;
 
-const checkInjected = () => {
+const checkInjected = (supress?: boolean) => {
   if (!wally) {
-    console.error(
-      "Couldn't find wally instance. Ensure init() method is called first."
-    );
+    if (!supress) {
+      console.error(
+        "Couldn't find wally instance. Ensure init() method is called first."
+      );
+    }
     return false;
   }
   return true;
@@ -28,8 +30,8 @@ export const init = (options: WallyConnectorOptions): void => {
   return;
 };
 
-export const getProvider = (): WallyConnector | null => {
-  if (!checkInjected()) {
+export const getProvider = (supress?: boolean): WallyConnector | null => {
+  if (!checkInjected(supress)) {
     return null;
   }
 
