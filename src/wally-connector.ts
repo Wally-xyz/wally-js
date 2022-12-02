@@ -347,6 +347,14 @@ class WallyConnector {
   }
 
   /**
+   * @deprecated - is deprecated and may be removed in the future. Please use the 'eth_requestAccounts' RPC method
+   * instead. For more information, see: https://eips.ethereum.org/EIPS/eip-1102
+   */
+  public async enable() {
+    this.request({ method: 'eth_requestAccounts' });
+  }
+
+  /**
    * This is the major exposed method for supporting JSON RPC methods
    * and associated wallet/blockchain functionality.
    * There are two main types of requests: those that require wallet info
