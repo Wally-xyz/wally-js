@@ -351,7 +351,7 @@ class WallyConnector {
    * instead. For more information, see: https://eips.ethereum.org/EIPS/eip-1102
    */
   public async enable() {
-    this.request({ method: 'eth_requestAccounts' });
+    return this.request({ method: 'eth_requestAccounts' });
   }
 
   /**
