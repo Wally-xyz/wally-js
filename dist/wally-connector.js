@@ -289,7 +289,7 @@ class WallyConnector {
      */
     enable() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.request({ method: 'eth_requestAccounts' });
+            return this.request({ method: 'eth_requestAccounts' });
         });
     }
     /**
