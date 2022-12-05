@@ -12,7 +12,7 @@ Import the init() function from the Wally library, and configure it with your cl
 
 \_app.tsx
 
-### When I imported wally it shows ups as 'wally-sdk' instead of 'wally'
+/Comment: When I imported wally it shows ups as 'wally-sdk' instead of 'wally'
 
 ```js
 import { init } from 'wally-sdk';
@@ -29,7 +29,7 @@ const MyApp: React.FC<LayoutProps> = ({ Component, pageProps }) => {
 
 export default MyApp;
 ```
-### This is the first time that worker.js file is mentioned here. Maybe a bit more context is needed.
+/Comment: This is the first time that worker.js file is mentioned here. Maybe a bit more context is needed.
 
 You'll also need to make sure that the `worker.js` file is copied into a part of your application that can serve static files. In the demo, for example, we need to add this webpack plugin to our next.js config:
 
