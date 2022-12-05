@@ -28,6 +28,7 @@ const MyApp: React.FC<LayoutProps> = ({ Component, pageProps }) => {
 export default MyApp;
 ```
 
+
 You'll also need to make sure that the `worker.js` file is copied into a part of your application that can serve static files. In the demo, for example, we need to add this webpack plugin to our next.js config:
 
 ```js
