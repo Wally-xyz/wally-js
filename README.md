@@ -1,4 +1,4 @@
-## Wally Connector
+## Wally Javascript SDK
 
 Install the library
 
