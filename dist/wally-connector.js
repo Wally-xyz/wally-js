@@ -319,10 +319,9 @@ class WallyConnector {
                 if (req.method === types_1.WallyMethodName.ACCOUNTS) {
                     return Promise.resolve([]);
                 }
-                else if (this.isRPCMethod(req.method)) {
-                    return this.requestRPC(req.method, 'params' in req ? req.params : undefined);
+                else if (this.isWallyMethod(req.method)) {
+                    return this.deferredRequest(req);
                 }
-                return this.deferredRequest(req);
             }
             let res;
             if (this.isWallyMethod(req.method)) {
