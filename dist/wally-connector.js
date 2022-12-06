@@ -319,6 +319,9 @@ class WallyConnector {
                 if (req.method === types_1.WallyMethodName.ACCOUNTS) {
                     return Promise.resolve([]);
                 }
+                else if (this.isRPCMethod(req.method)) {
+                    return this.requestRPC(req.method, 'params' in req ? req.params : undefined);
+                }
                 return this.deferredRequest(req);
             }
             let res;
@@ -474,6 +477,7 @@ class WallyConnector {
                     body: JSON.stringify({
                         method,
                         params,
+                        clientId: this.clientId,
                     }),
                 });
                 if (!resp.ok || resp.status >= 300) {

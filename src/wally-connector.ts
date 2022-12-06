@@ -386,6 +386,11 @@ class WallyConnector {
       // (eth_accounts might just be for checking loggedin status)
       if (req.method === WallyMethodName.ACCOUNTS) {
         return Promise.resolve([] as any);
+      } else if (this.isRPCMethod(req.method)) {
+        return this.requestRPC(
+          req.method as RPCMethodName,
+          'params' in req ? (req.params as RPCMethodParams<T>) : undefined
+        );
       }
       return this.deferredRequest(req);
     }
@@ -581,6 +586,7 @@ class WallyConnector {
         body: JSON.stringify({
           method,
           params,
+          clientId: this.clientId,
         }),
       });
 
