@@ -1,4 +1,4 @@
-## Wally Connector
+## Wally Javascript SDK
 
 Install the library
 
@@ -13,7 +13,7 @@ Import the init() function from the Wally library, and configure it with your cl
 \_app.tsx
 
 ```js
-import { init } from 'wally';
+import { init } from 'wally-sdk';
 
 const MyApp: React.FC<LayoutProps> = ({ Component, pageProps }) => {
  if (typeof window !== 'undefined') {
@@ -28,7 +28,9 @@ const MyApp: React.FC<LayoutProps> = ({ Component, pageProps }) => {
 export default MyApp;
 ```
 
-You'll also need to make sure that the `worker.js` file is copied into a part of your application that can serve static files. In the demo, for example, we need to add this webpack plugin to our next.js config:
+In order to make the signup flow seamless and ensure that users don't lose their place in your application, we open a new tab for the sign in, and need to communicate back with the old tab once the sign in is successfully completed. In order to do that, we have a service worker set up in `worker.js`.
+
+You'll need to make sure that the `worker.js` file is copied into a part of your application that can serve static files. In the demo, for example, we need to add this webpack plugin to our next.js config:
 
 ```js
 const CopyPlugin = require('copy-webpack-plugin');
