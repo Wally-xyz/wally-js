@@ -1,6 +1,6 @@
 {
   "name": "wally-sdk",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Connector lib for wallet-api",
   "license": "ISC",
   "author": "Wally <contact@wally.xyz>",
