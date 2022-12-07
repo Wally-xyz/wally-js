@@ -386,8 +386,9 @@ class WallyConnector {
       // (eth_accounts might just be for checking loggedin status)
       if (req.method === WallyMethodName.ACCOUNTS) {
         return Promise.resolve([] as any);
+      } else if (this.isWallyMethod(req.method)) {
+        return this.deferredRequest(req);
       }
-      return this.deferredRequest(req);
     }
 
     let res;
@@ -581,6 +582,7 @@ class WallyConnector {
         body: JSON.stringify({
           method,
           params,
+          clientId: this.clientId,
         }),
       });
 

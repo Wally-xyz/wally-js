@@ -319,7 +319,9 @@ class WallyConnector {
                 if (req.method === types_1.WallyMethodName.ACCOUNTS) {
                     return Promise.resolve([]);
                 }
-                return this.deferredRequest(req);
+                else if (this.isWallyMethod(req.method)) {
+                    return this.deferredRequest(req);
+                }
             }
             let res;
             if (this.isWallyMethod(req.method)) {
@@ -474,6 +476,7 @@ class WallyConnector {
                     body: JSON.stringify({
                         method,
                         params,
+                        clientId: this.clientId,
                     }),
                 });
                 if (!resp.ok || resp.status >= 300) {
