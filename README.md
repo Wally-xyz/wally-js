@@ -32,6 +32,8 @@ In order to make the signup flow seamless and ensure that users don't lose their
 
 You'll need to make sure that the `worker.js` file is copied into a part of your application that can serve static files. In the demo, for example, we need to add this webpack plugin to our next.js config:
 
+PS - make sure you have CopyWebpackPlugin installed via `yarn add copy-webpack-plugin --dev`
+
 ```js
 const CopyPlugin = require('copy-webpack-plugin');
 

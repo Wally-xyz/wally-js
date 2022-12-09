@@ -156,7 +156,9 @@ class WallyConnector {
 
   public async login(email?: string): Promise<void> {
     if (this.isLoggingIn) {
-      return Promise.reject('Already logging in.');
+      return Promise.reject({
+        message: 'Already logging in.',
+      });
     }
     this.isLoggingIn = true;
 
@@ -381,6 +383,14 @@ class WallyConnector {
       );
     }
 
+    if (req.method === WallyMethodName.SIGN) {
+      return Promise.reject({
+        code: 4200,
+        message:
+          'Wally does not support eth_sign due to its dangerous nature. Please try personal_sign or sign_transaction instead.',
+      });
+    }
+
     if (!this.isLoggedIn()) {
       // bandaid for courtyard, etc.
       // (eth_accounts might just be for checking loggedin status)
@@ -558,7 +568,10 @@ class WallyConnector {
       );
     }
 
-    return Promise.reject(new Error(`Invalid response for ${method}`));
+    return Promise.reject({
+      code: '32603',
+      message: `Invalid response for ${method}`,
+    });
   }
 
   /**
@@ -605,7 +618,10 @@ class WallyConnector {
         `Wally server returned error: ${err} when handling method: ${method}`
       );
     }
-    return Promise.reject(new Error(`Invalid response for ${method}`));
+    return Promise.reject({
+      code: '32603',
+      message: `Invalid response for ${method}`,
+    });
   }
 }
 

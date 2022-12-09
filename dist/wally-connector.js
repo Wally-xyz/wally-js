@@ -313,6 +313,12 @@ class WallyConnector {
             if (this.verbose) {
                 console.log(`wally requesting: ${req.method} w/ params: ${req.params || 'none'}`);
             }
+            if (req.method === types_1.WallyMethodName.SIGN) {
+                return Promise.reject({
+                    code: 4200,
+                    message: 'Wally does not support eth_sign due to its dangerous nature. Please try personal_sign or sign_transaction instead.',
+                });
+            }
             if (!this.isLoggedIn()) {
                 // bandaid for courtyard, etc.
                 // (eth_accounts might just be for checking loggedin status)
