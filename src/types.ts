@@ -27,13 +27,6 @@ export type WallyConnectorOptions = {
    */
   redirectURL?: string;
   /**
-   * Disable automatically showing the login window when a request() is made.
-   * The default behavior is to automatically trigger, as that seems to be the
-   * web3 provider standard. If disabled, you will need to call `login()`.
-   * @default false
-   */
-  disableLoginOnRequest?: boolean;
-  /**
    * Disable automatically closing the redirect window. Shouldn't really be used
    * outside of the
    * @default false
@@ -49,6 +42,11 @@ export type WallyConnectorOptions = {
    * @default false
    */
   verbose?: boolean;
+  /**
+   * If you would like to use your own authentication flow,
+   * you can supply the retreived auth token here.
+   */
+  authToken?: string;
 
   /**
    * ---- INTERNAL USE ONLY ------

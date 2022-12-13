@@ -28,7 +28,6 @@ class WallyConnector {
   private disableRedirectClose = false;
   private host: string | null;
   private isDevelopment: boolean;
-  private disableLoginOnRequest?: boolean;
   private redirectUrl: string | undefined;
   private verbose: boolean;
   private onTokenFetched?: (address: string) => void;
@@ -45,10 +44,10 @@ class WallyConnector {
   constructor({
     clientId,
     disableRedirectClose,
-    disableLoginOnRequest,
     redirectURL,
     verbose,
     sharedWorkerUrl,
+    authToken,
     _devUrl,
     _disableSharedWorker,
     _isDevelopment,
@@ -58,10 +57,13 @@ class WallyConnector {
     this.disableRedirectClose = !!disableRedirectClose;
     this.host = (_isDevelopment && _devUrl) || APP_ROOT;
     this.isDevelopment = !!_isDevelopment;
-    this.disableLoginOnRequest = disableLoginOnRequest;
     this.onTokenFetched = _onTokenFetched;
     this.redirectUrl = redirectURL;
     this.verbose = !!verbose;
+
+    if (authToken) {
+      this.setAuthToken(authToken);
+    }
 
     if (!_disableSharedWorker && sharedWorkerUrl && SharedWorker) {
       this.worker = new SharedWorker(sharedWorkerUrl);
@@ -301,6 +303,10 @@ class WallyConnector {
     return localStorage.getItem(`wally:${this.clientId}:token`);
   }
 
+  public clearAuthToken() {
+    localStorage.removeItem(`wally:${this.clientId}:token`);
+  }
+
   private generateStateCode(length = 10) {
     const chars = [];
     for (let i = 0; i < 26; i++) {
@@ -433,7 +439,7 @@ class WallyConnector {
     req: RequestObj<T>
   ): Promise<MethodResponse<T> | null> {
     return new Promise((resolve, reject) => {
-      if (!this.disableLoginOnRequest && !this.isLoggingIn) {
+      if (!this.isLoggingIn) {
         this.login().then(() => {
           resolve(this.request(req));
         });
