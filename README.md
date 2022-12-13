@@ -84,7 +84,7 @@ web3.eth.requestAccounts().then((res) => {
 });
 ```
 
-If not logged in to wally, this will automatically prompt the login window and resolve the promise with the result. This login flow will also happen with any other request. Alternatively, you can call `wallyProvider.login()` directly if you need more control over the login flow. See the `disableLoginOnRequest` option.
+If not logged in to wally, this will automatically prompt the login window and resolve the promise with the result. This login flow will also happen with any other request. Alternatively, you can call `wallyProvider.login()` directly if you need more control over the login flow.
 
 Once your provider is configured, the rest of your app should work exactly the same way that it might work with Metamask or WalletConnect and no other changes should be necessary.
 
