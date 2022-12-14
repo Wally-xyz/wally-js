@@ -2,7 +2,7 @@ import { WallyConnectorOptions } from './types';
 
 import WallyConnector from './wally-connector';
 
-let wally: WallyConnector | null = null;
+let wally: WallyConnector | undefined = undefined;
 
 const checkInjected = (supress?: boolean) => {
   if (!wally) {
@@ -30,9 +30,9 @@ export const init = (options: WallyConnectorOptions): void => {
   return;
 };
 
-export const getProvider = (supress?: boolean): WallyConnector | null => {
+export const getProvider = (supress?: boolean): WallyConnector | undefined => {
   if (!checkInjected(supress)) {
-    return null;
+    return undefined;
   }
 
   return wally;
@@ -59,3 +59,11 @@ export const finishLogin = (address: string): void => {
 
   wally!.finishLogin(address);
 };
+
+export const logout = () => {
+  wally?.clearAuthToken();
+}
+
+export const clearInstance = () => {
+  wally = undefined;
+}

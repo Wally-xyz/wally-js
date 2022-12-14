@@ -23,7 +23,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const types_1 = require("./types");
 const constants_1 = require("./constants");
 class WallyConnector {
-    constructor({ clientId, disableRedirectClose, disableLoginOnRequest, redirectURL, verbose, sharedWorkerUrl, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }) {
+    constructor({ clientId, disableRedirectClose, redirectURL, verbose, sharedWorkerUrl, authToken, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }) {
         // Public
         this.selectedAddress = null;
         this.disableRedirectClose = false;
@@ -45,10 +45,12 @@ class WallyConnector {
         this.disableRedirectClose = !!disableRedirectClose;
         this.host = (_isDevelopment && _devUrl) || constants_1.APP_ROOT;
         this.isDevelopment = !!_isDevelopment;
-        this.disableLoginOnRequest = disableLoginOnRequest;
         this.onTokenFetched = _onTokenFetched;
         this.redirectUrl = redirectURL;
         this.verbose = !!verbose;
+        if (authToken) {
+            this.setAuthToken(authToken);
+        }
         if (!_disableSharedWorker && sharedWorkerUrl && SharedWorker) {
             this.worker = new SharedWorker(sharedWorkerUrl);
             this.connectToSharedWorker();
@@ -244,6 +246,9 @@ class WallyConnector {
     getAuthToken() {
         return localStorage.getItem(`wally:${this.clientId}:token`);
     }
+    clearAuthToken() {
+        localStorage.removeItem(`wally:${this.clientId}:token`);
+    }
     generateStateCode(length = 10) {
         const chars = [];
         for (let i = 0; i < 26; i++) {
@@ -353,7 +358,7 @@ class WallyConnector {
      */
     deferredRequest(req) {
         return new Promise((resolve, reject) => {
-            if (!this.disableLoginOnRequest && !this.isLoggingIn) {
+            if (!this.isLoggingIn) {
                 this.login().then(() => {
                     resolve(this.request(req));
                 });
