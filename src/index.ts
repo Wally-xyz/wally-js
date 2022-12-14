@@ -1,6 +1,6 @@
-import { WallyConnectorOptions } from './types';
+import { WallyOptions } from './types';
 
-import WallyConnector from './wally-connector';
+import WallyConnector from './wally-js';
 
 let wally: WallyConnector | undefined = undefined;
 
@@ -16,7 +16,7 @@ const checkInjected = (supress?: boolean) => {
   return true;
 };
 
-export const init = (options: WallyConnectorOptions): void => {
+export const init = (options: WallyOptions): void => {
   if (typeof window === 'undefined') {
     console.error('Ensure init() is called on the client only.');
     return;
@@ -61,7 +61,7 @@ export const finishLogin = (address: string): void => {
 };
 
 export const logout = () => {
-  wally?.clearAuthToken();
+  wally?.logout();
 }
 
 export const clearInstance = () => {

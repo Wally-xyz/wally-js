@@ -1,44 +1,18 @@
 import { TypedDataDomain, TypedDataField } from '@ethersproject/abstract-signer';
 import { Block, Filter, TransactionReceipt, TransactionRequest, TransactionResponse } from '@ethersproject/providers';
 import { BigNumberish } from '@ethersproject/bignumber';
+import Messenger from './messenger';
+import Auth from './auth';
 export declare type SignedMessage = {
     address: string;
     signature: string;
 };
-export declare type WallyConnectorOptions = {
-    /**
-     * The clientId you get when signing up. Should match the dashboard value
-     */
-    clientId: string;
-    /**
-     * If you'd like to use a more dynamic redirect. Only possible when the
-     * redirectUrl in your dashboard settings is set as a regex.
-     */
-    redirectURL?: string;
-    /**
-     * Disable automatically closing the redirect window. Shouldn't really be used
-     * outside of the
-     * @default false
-     */
-    disableRedirectClose?: boolean;
+export interface MessengerOptions {
     /**
      * Where the package should look for the shared worker script. Must be set if the shared worker
      * is enabled, and the location will change likely depending on your framework.
      */
     sharedWorkerUrl?: string;
-    /**
-     * If you want more insight into what's going on (requests and responses)
-     * @default false
-     */
-    verbose?: boolean;
-    /**
-     * If you would like to use your own authentication flow,
-     * you can supply the retreived auth token here.
-     */
-    authToken?: string;
-    /**
-     * ---- INTERNAL USE ONLY ------
-     */
     /**
      * If you have another cross-tab messaging solution for informing the primary browser
      * tab when the secondary completes its redirection and token fetching. Should only
@@ -47,6 +21,35 @@ export declare type WallyConnectorOptions = {
      * @default false
      */
     _disableSharedWorker?: boolean;
+}
+interface _AuthOptions {
+    /**
+     * If you would like to use your own authentication flow,
+     * you can supply the retreived auth token here.
+     */
+    authToken?: string;
+    /**
+     * The clientId you get when signing up. Should match the dashboard value
+     */
+    clientId: string;
+    /**
+     * Disable automatically closing the redirect window. Shouldn't really be used
+     * outside of the
+     * @default false
+     */
+    disableRedirectClose?: boolean;
+    /**
+     * If you'd like to use a more dynamic redirect. Only possible when the
+     * redirectURL in your dashboard settings is set as a regex.
+     * TODO: Rename redirectUrl to match
+     */
+    redirectURL?: string;
+    /**
+     * Required when using devUrl.
+     * TODO: Make this better.
+     * @default false
+     */
+    _isDevelopment?: boolean;
     /**
      * Function called after the token is fetched in the redirect. Should be used
      * when the _disableSharedWorker is true - as you'll need some other method of
@@ -56,17 +59,31 @@ export declare type WallyConnectorOptions = {
      * @param address The connected wallet's address
      */
     _onTokenFetched?(address: string): void;
+}
+export interface AuthOptions extends _AuthOptions {
+    host: string;
+    messenger: Messenger;
+}
+interface _RequesterOptions {
+    /** Same */
+    clientId: string;
     /**
-     * Required when using devUrl.
-     * TODO: Make this better.
+     * If you want more insight into what's going on (requests and responses)
      * @default false
      */
-    _isDevelopment?: boolean;
+    verbose?: boolean;
+}
+export interface RequesterOptions extends _RequesterOptions {
+    host: string;
+    messenger: Messenger;
+    auth: Auth;
+}
+export interface WallyOptions extends MessengerOptions, _AuthOptions, _RequesterOptions {
     /**
      * The local instance of the wally api. APP ROOT used if unset or not dev mode
      */
     _devUrl?: string;
-};
+}
 export declare enum WorkerMessage {
     LOGIN_SUCCESS = "login-success",
     LOGIN_FAILURE = "login-failure"

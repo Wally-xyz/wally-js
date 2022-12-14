@@ -1,6 +1,6 @@
-import { WallyConnectorOptions } from './types';
-import WallyConnector from './wally-connector';
-export declare const init: (options: WallyConnectorOptions) => void;
+import { WallyOptions } from './types';
+import WallyConnector from './wally-js';
+export declare const init: (options: WallyOptions) => void;
 export declare const getProvider: (supress?: boolean) => WallyConnector | undefined;
 /**
  * Must be used if `disableLoginOnRequest` is true.
