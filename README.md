@@ -5,7 +5,7 @@ Install the library
 ```
 $ npm install wally-sdk
 --- or ---
-$ yarn wally-sdk
+$ yarn add wally-sdk
 ```
 
 Import the init() function from the Wally library, and configure it with your clientID (available in the Wally dashboard on your app’s page).
@@ -33,6 +33,7 @@ In order to make the signup flow seamless and ensure that users don't lose their
 You'll need to make sure that the `worker.js` file is copied into a part of your application that can serve static files. In the demo, for example, we need to add this webpack plugin to our next.js config:
 
 ```js
+const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
@@ -84,7 +85,7 @@ web3.eth.requestAccounts().then((res) => {
 });
 ```
 
-If not logged in to wally, this will automatically prompt the login window and resolve the promise with the result. This login flow will also happen with any other request. Alternatively, you can call `wallyProvider.login()` directly if you need more control over the login flow. See the `disableLoginOnRequest` option.
+If not logged in to wally, this will automatically prompt the login window and resolve the promise with the result. This login flow will also happen with any other request. Alternatively, you can call `wallyProvider.login()` directly if you need more control over the login flow.
 
 Once your provider is configured, the rest of your app should work exactly the same way that it might work with Metamask or WalletConnect and no other changes should be necessary.
 

@@ -12,9 +12,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.finishLogin = exports.login = exports.getProvider = exports.init = void 0;
+exports.clearInstance = exports.logout = exports.finishLogin = exports.login = exports.getProvider = exports.init = void 0;
 const wally_connector_1 = __importDefault(require("./wally-connector"));
-let wally = null;
+let wally = undefined;
 const checkInjected = (supress) => {
     if (!wally) {
         if (!supress) {
@@ -38,7 +38,7 @@ const init = (options) => {
 exports.init = init;
 const getProvider = (supress) => {
     if (!checkInjected(supress)) {
-        return null;
+        return undefined;
     }
     return wally;
 };
@@ -63,4 +63,12 @@ const finishLogin = (address) => {
     wally.finishLogin(address);
 };
 exports.finishLogin = finishLogin;
+const logout = () => {
+    wally === null || wally === void 0 ? void 0 : wally.clearAuthToken();
+};
+exports.logout = logout;
+const clearInstance = () => {
+    wally = undefined;
+};
+exports.clearInstance = clearInstance;
 //# sourceMappingURL=index.js.map
