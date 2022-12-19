@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.clearInstance = exports.logout = exports.finishLogin = exports.login = exports.getProvider = exports.init = void 0;
-const wally_connector_1 = __importDefault(require("./wally-connector"));
+const wally_js_1 = __importDefault(require("./wally-js"));
 let wally = undefined;
 const checkInjected = (supress) => {
     if (!wally) {
@@ -29,7 +29,7 @@ const init = (options) => {
         console.error('Ensure init() is called on the client only.');
         return;
     }
-    wally = wally || new wally_connector_1.default(options);
+    wally = wally || new wally_js_1.default(options);
     if (wally.isRedirected()) {
         wally.handleRedirect();
     }
@@ -64,7 +64,7 @@ const finishLogin = (address) => {
 };
 exports.finishLogin = finishLogin;
 const logout = () => {
-    wally === null || wally === void 0 ? void 0 : wally.clearAuthToken();
+    wally === null || wally === void 0 ? void 0 : wally.logout();
 };
 exports.logout = logout;
 const clearInstance = () => {

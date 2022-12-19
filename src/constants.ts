@@ -1,7 +1,6 @@
 import { WallyMethodName } from "./types";
 
 export const APP_ROOT = 'https://api.wally.xyz/v1';
-export const REDIRECT_CAPTION_ID = 'wally-redirect-caption';
 
 // TODO: Figure out the difference between sign & personal sign.
 // There might be some prefixing deal in the spec, but right now
