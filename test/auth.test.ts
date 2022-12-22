@@ -3,7 +3,10 @@ import Messenger from '../src/messenger';
 import { EmitterMessage, WorkerMessage } from '../src/types';
 
 describe('Auth', () => {
-  let windowOpenSpy: any;
+  let windowOpenSpy: jest.SpyInstance;
+  let messenger: Messenger;
+  const portStartSpy = jest.fn();
+  const portPostSpy = jest.fn();
 
   beforeEach(() => {
     windowOpenSpy = jest.spyOn(window, 'open');
@@ -12,10 +15,16 @@ describe('Auth', () => {
       () =>
         ({
           port: {
-            start: () => {},
-            postMessage: () => {},
+            start: portStartSpy,
+            postMessage: portPostSpy,
           },
         } as any)
+    );
+    messenger = new Messenger({
+      sharedWorkerUrl: '/werker.js',
+    });
+    portPostSpy.mockImplementation((name) =>
+      messenger.handleWorkerMessage(name)
     );
   });
 
@@ -25,20 +34,26 @@ describe('Auth', () => {
   });
 
   describe('constructor', () => {
-    it('sets the auth token if passed', () => {
-      const authToken = 'asdf';
-      const clientId = '1234';
-      const storageSpy = jest.spyOn(Storage.prototype, 'setItem');
+    const authToken = 'asdf';
+    const clientId = '1234';
+    let storageSetSpy: jest.SpyInstance;
 
+    beforeEach(() => {
+      storageSetSpy = jest.spyOn(Storage.prototype, 'setItem');
+    });
+
+    afterEach(() => {
+      storageSetSpy.mockRestore();
+    });
+
+    it('sets the auth token if passed', () => {
       new Auth({
         clientId,
         host: 'http://localhost:1738',
         authToken,
-        messenger: new Messenger({}),
+        messenger,
       });
-      expect(storageSpy).toHaveBeenCalledWith('wally:1234:token', authToken);
-
-      storageSpy.mockRestore();
+      expect(storageSetSpy).toHaveBeenCalledWith('wally:1234:token', authToken);
     });
   });
 
@@ -46,51 +61,59 @@ describe('Auth', () => {
     const clientId = '1234';
     const host = 'http://localhost:1738';
     let auth: Auth;
+    let consoleSpy: jest.SpyInstance;
+    let genCodeSpy: jest.SpyInstance;
+    let storageSetSpy: jest.SpyInstance;
+    let storageGetSpy: jest.SpyInstance;
+    let closeSpy: jest.SpyInstance;
 
     beforeEach(() => {
+      consoleSpy = jest.spyOn(console, 'error');
+      consoleSpy.mockImplementation(() => {});
+      genCodeSpy = jest.spyOn(Auth.prototype as any, 'generateStateCode');
+      storageSetSpy = jest.spyOn(Storage.prototype, 'setItem');
+      storageGetSpy = jest.spyOn(Storage.prototype, 'getItem');
+      closeSpy = jest.spyOn(global.window, 'close');
+      closeSpy.mockImplementation(() => {});
+
       auth = new Auth({
         clientId,
         host,
         authToken: 'asdf',
-        messenger: new Messenger({
-          sharedWorkerUrl: '/worker.js',
-        }),
+        messenger,
       });
     });
 
     afterEach(() => {
       auth = undefined as any;
+      consoleSpy.mockRestore();
+      genCodeSpy.mockRestore();
+      storageSetSpy.mockRestore();
+      storageGetSpy.mockRestore();
+      closeSpy.mockRestore();
     });
 
     it('rejects if already logging in', () => {
       auth.isLoggingIn = true;
-      return expect(auth.login()).rejects.toBeDefined();
+      return expect(auth.login()).rejects.toThrow();
     });
 
     it('shows console error if no client id set', () => {
-      const consoleSpy = jest.spyOn(console, 'error');
-      consoleSpy.mockImplementation(() => {});
-      const codeGenSpy = jest.spyOn(Auth.prototype as any, 'generateStateCode');
       auth = new Auth({} as any);
       auth.login();
       expect(consoleSpy).toHaveBeenCalled();
-      expect(codeGenSpy).toHaveBeenCalledTimes(0);
-
-      consoleSpy.mockRestore();
-      codeGenSpy.mockRestore();
+      expect(genCodeSpy).toHaveBeenCalledTimes(0);
     });
 
     it('opens a window to the wally api login page with clientId and state', () => {
       const state = 'mississippi';
-      const storageSpy = jest.spyOn(Storage.prototype, 'setItem');
-
       jest
         .spyOn(Auth.prototype as any, 'generateStateCode')
         .mockImplementation(() => state);
 
       auth.login();
 
-      expect(storageSpy).toHaveBeenCalledWith(
+      expect(storageSetSpy).toHaveBeenCalledWith(
         `wally:${clientId}:state:token`,
         state
       );
@@ -98,8 +121,6 @@ describe('Auth', () => {
         `${host}/oauth/otp?clientId=${clientId}&state=${state}`,
         '_blank'
       );
-
-      storageSpy.mockRestore();
     });
 
     it('passes redirectUrl and email when set', () => {
@@ -107,14 +128,13 @@ describe('Auth', () => {
       const email = 'joe@smith.net';
       const redirectURL = 'http://salmonofcapistrano.com';
 
-      const genCodeSpy = jest.spyOn(Auth.prototype as any, 'generateStateCode');
       genCodeSpy.mockImplementation(() => state);
 
       auth = new Auth({
         clientId,
         host,
         redirectURL,
-        messenger: new Messenger({}),
+        messenger,
       } as any);
       auth.login(email);
 
@@ -124,49 +144,109 @@ describe('Auth', () => {
         )}&email=${encodeURIComponent(email)}`,
         '_blank'
       );
-      genCodeSpy.mockRestore();
+    });
+
+    // NOTE: This is just the happy-path.
+    // More edge cases are tested below in 'returned promise' and 'redirect'
+    it('can get all the way through the login flow with handled redirect', () => {
+      const state = 'california';
+      delete (global.window as any).location;
+      global.window.location = {
+        search: `?state=${state}&authorization_code=asdf1234`,
+      } as any;
+      genCodeSpy.mockImplementation(() => state);
+      storageGetSpy.mockImplementation(() => state);
+      global.fetch = jest.fn(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              token: 'asdf',
+              wallet: '0x1234',
+            }),
+        })
+      ) as any;
+
+      setTimeout(async () => {
+        await auth.handleRedirect();
+      });
+
+      return auth.login().then(
+        () => {
+          expect(true).toBe(true);
+        },
+        () => {
+          expect(false).toBe(true);
+        }
+      );
     });
 
     describe('returned promise', () => {
+      let emitterAddSpy: jest.SpyInstance;
+      let tokenSpy: jest.SpyInstance;
+      let consoleSpy: jest.SpyInstance;
+      let workerSpy: jest.SpyInstance;
+
+      beforeEach(() => {
+        emitterAddSpy = jest.spyOn(Messenger.prototype, 'addListener');
+        workerSpy = jest.spyOn(Messenger.prototype, 'onWorkerMessage');
+        tokenSpy = jest.spyOn(Auth.prototype, 'getToken');
+        consoleSpy = jest.spyOn(console, 'error');
+        consoleSpy.mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        emitterAddSpy.mockRestore();
+        workerSpy.mockRestore();
+        tokenSpy.mockRestore();
+        consoleSpy.mockRestore();
+      });
+
       it('attaches message listeners', () => {
-        const emitterSpy = jest.spyOn(Messenger.prototype, 'addListener');
-        const workerSpy = jest.spyOn(Messenger.prototype, 'onWorkerMessage');
         auth.login();
-        expect(emitterSpy).toHaveBeenCalled();
+        expect(emitterAddSpy).toHaveBeenCalled();
         expect(workerSpy).toHaveBeenCalledTimes(2);
         expect(workerSpy.mock.calls[0][0]).toBe(WorkerMessage.LOGIN_SUCCESS);
         expect(workerSpy.mock.calls[1][0]).toBe(WorkerMessage.LOGIN_FAILURE);
-
-        emitterSpy.mockRestore();
-        workerSpy.mockRestore();
       });
 
-      it('resolves on the accounts changed emitter message', async () => {
+      it('resolves on the accounts changed emitter message', () => {
         setTimeout(() => {
           auth['messenger'].emit(EmitterMessage.ACCOUNTS_CHANGED, '0x1234');
         }, 0);
 
-        await auth.login();
+        expect.assertions(1);
+        return auth.login().then(
+          () => {
+            expect(true).toBe(true);
+          },
+          () => {
+            expect(false).toBe(true);
+          }
+        );
       });
 
-      it('resolves on the login success worker message when token', async () => {
-        const tokenSpy = jest.spyOn(Auth.prototype, 'getToken');
+      it('resolves on the login success worker message when token', () => {
         tokenSpy.mockImplementation(() => 'asdf');
 
         setTimeout(() => {
           auth['messenger'].handleWorkerMessage(WorkerMessage.LOGIN_SUCCESS);
         }, 0);
 
-        await auth.login();
-        expect(tokenSpy).toHaveBeenCalled();
-        tokenSpy.mockRestore();
+        expect.assertions(1);
+        return auth.login().then(
+          () => {
+            expect(true).toBe(true);
+          },
+          () => {
+            expect(false).toBe(true);
+          }
+        );
       });
 
       it('rejects on the login success worker message when no token', async () => {
-        const tokenSpy = jest.spyOn(Auth.prototype, 'getToken');
         tokenSpy.mockImplementation(() => null);
-        const consoleSpy = jest.spyOn(console, 'error');
-        consoleSpy.mockImplementation(() => {});
 
         setTimeout(() => {
           auth['messenger'].handleWorkerMessage(WorkerMessage.LOGIN_SUCCESS);
@@ -174,20 +254,15 @@ describe('Auth', () => {
 
         await expect(auth.login()).rejects.toThrowError();
         expect(consoleSpy).toHaveBeenCalled();
-        consoleSpy.mockRestore();
       });
 
       it('rejects on the login failure worker message', async () => {
-        const consoleSpy = jest.spyOn(console, 'error');
-        consoleSpy.mockImplementation(() => {});
-
         setTimeout(() => {
           auth['messenger'].handleWorkerMessage(WorkerMessage.LOGIN_FAILURE);
         }, 0);
 
         await expect(auth.login()).rejects.toThrowError();
         expect(consoleSpy).toHaveBeenCalled();
-        consoleSpy.mockRestore();
       });
     });
   });
@@ -196,23 +271,24 @@ describe('Auth', () => {
     let clientId = '1234';
     let host = 'http://localhost:1738';
     let auth: Auth;
-    let storageGetSpy: any;
-    let storageSetSpy: any;
-    let storageRemoveSpy: any;
+    let consoleSpy: jest.SpyInstance;
+    let storageGetSpy: jest.SpyInstance;
+    let storageSetSpy: jest.SpyInstance;
+    let storageRemoveSpy: jest.SpyInstance;
     let onTokenFetchedSpy: any = jest.fn();
 
     beforeEach(() => {
       auth = new Auth({
         clientId,
         host,
-        messenger: new Messenger({
-          sharedWorkerUrl: '/worker.js',
-        }),
+        messenger,
         _onTokenFetched: onTokenFetchedSpy,
       });
       storageGetSpy = jest.spyOn(Storage.prototype, 'getItem');
       storageSetSpy = jest.spyOn(Storage.prototype, 'setItem');
       storageRemoveSpy = jest.spyOn(Storage.prototype, 'removeItem');
+      consoleSpy = jest.spyOn(console, 'error');
+      consoleSpy.mockImplementation(() => {});
     });
 
     afterEach(() => {
@@ -220,15 +296,16 @@ describe('Auth', () => {
       storageGetSpy.mockRestore();
       storageSetSpy.mockRestore();
       storageRemoveSpy.mockRestore();
+      consoleSpy.mockRestore();
     });
 
     it.each([
-      ['whatever', true],
+      ['statestring', true],
       [null, false],
-    ])('calls getState to determine if redirected', (state, expected) => {
+    ])('when state: "%s", redirected: "%s"', (state, expected) => {
       storageGetSpy.mockImplementation(() => state);
       expect(auth.isRedirected()).toBe(expected);
-      expect(storageGetSpy).toBeCalled();
+      expect(storageGetSpy).toBeCalledTimes(1);
     });
 
     it('does nothing if already handled redirect', () => {
@@ -256,8 +333,6 @@ describe('Auth', () => {
         search: `?state=${state}&authorization_code=${authCode}`,
       } as any;
       storageGetSpy.mockImplementation(() => state);
-      const consoleSpy = jest.spyOn(console, 'error');
-      consoleSpy.mockImplementation(() => {});
       global.fetch = jest.fn();
 
       expect.assertions(1);
@@ -269,11 +344,13 @@ describe('Auth', () => {
           body: JSON.stringify({ authCode }),
         })
       );
-      consoleSpy.mockRestore();
     });
 
     describe('response handling', () => {
-      let consoleSpy: any;
+      let consoleSpy: jest.SpyInstance;
+      let messengerSpy: jest.SpyInstance;
+      let timeoutSpy: jest.SpyInstance;
+      let closeSpy: jest.SpyInstance;
 
       beforeEach(() => {
         const state = 'state';
@@ -284,14 +361,23 @@ describe('Auth', () => {
         storageGetSpy.mockImplementation(() => state);
         consoleSpy = jest.spyOn(console, 'error');
         consoleSpy.mockImplementation(() => {});
+        messengerSpy = jest.spyOn(auth['messenger'], 'sendWorkerMessage');
+        timeoutSpy = jest.spyOn(global, 'setTimeout');
+        timeoutSpy.mockImplementation(((fn: any, _: any) => {
+          fn();
+        }) as any);
+        closeSpy = jest.spyOn(global.window, 'close');
+        closeSpy.mockImplementation(() => {});
       });
 
       afterEach(() => {
         consoleSpy.mockRestore();
+        messengerSpy.mockRestore();
+        timeoutSpy.mockRestore();
+        closeSpy.mockRestore();
       });
 
       it('shows error, deletes state, and sends message on bad response', async () => {
-        const messengerSpy = jest.spyOn(auth['messenger'], 'sendWorkerMessage');
         global.fetch = jest.fn(() => undefined as any);
 
         await auth.handleRedirect();
@@ -304,14 +390,6 @@ describe('Auth', () => {
       it('finishes login when ok response', async () => {
         const token = 'asdfqewr';
         const wallet = '0xuipjk';
-        const messengerSpy = jest.spyOn(auth['messenger'], 'sendWorkerMessage');
-        const timeoutSpy = jest.spyOn(global, 'setTimeout');
-        timeoutSpy.mockImplementation(((fn: any, _: any) => {
-          fn();
-        }) as any);
-        const closeSpy = jest.spyOn(global.window, 'close');
-        closeSpy.mockImplementation(() => {});
-
         global.fetch = jest.fn(() =>
           Promise.resolve({
             ok: true,

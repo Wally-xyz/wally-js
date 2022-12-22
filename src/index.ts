@@ -2,7 +2,7 @@ import { WallyOptions } from './types';
 
 import WallyJS from './wally-js';
 
-let wally: WallyJS | undefined = undefined;
+let wally: WallyJS | null = null;
 
 const checkInjected = (supress?: boolean) => {
   if (!wally) {
@@ -30,9 +30,9 @@ export const init = (options: WallyOptions): void => {
   return;
 };
 
-export const getProvider = (supress?: boolean): WallyJS | undefined => {
+export const getProvider = (supress?: boolean): WallyJS | null => {
   if (!checkInjected(supress)) {
-    return undefined;
+    return null;
   }
 
   return wally;
@@ -65,5 +65,5 @@ export const logout = () => {
 };
 
 export const clearInstance = () => {
-  wally = undefined;
+  wally = null;
 };

@@ -35,7 +35,7 @@ describe('Messenger', () => {
       [false, undefined, true],
       [false, '/worker.js', false],
     ])(
-      'does not create a shared worker when it is disabled, no url is passed, or unavailable',
+      'does not create a shared worker when disabled: %s, url: %s, or defined: %s',
       (_disableSharedWorker, sharedWorkerUrl, sharedWorkerAvailable) => {
         SharedWorker = sharedWorkerAvailable ? jest.fn() : (undefined as any);
         const messenger = new Messenger({
@@ -49,35 +49,9 @@ describe('Messenger', () => {
 
   describe('message emitter', () => {
     let messenger: Messenger;
-    const name1 = 'connect';
-    const name2 = 'disconnect';
-    const fn1 = (a: any) => {};
-    const fn2 = (b: any) => {};
 
     beforeEach(() => {
       messenger = new Messenger({});
-    });
-
-    it('can add listeners', () => {
-      messenger.addListener(name1, fn1);
-      messenger.addListener(name2, fn2);
-      expect(messenger['emitterCallbacks'][name1]!.length).toBe(1);
-      expect(messenger['emitterCallbacks'][name2]!.length).toBe(1);
-    });
-
-    it('can remove listeners', () => {
-      messenger.addListener(name1, fn1);
-      messenger.addListener(name1, fn2);
-      messenger.removeListener(name1, fn1);
-      expect(messenger['emitterCallbacks'][name1]!.length).toBe(1);
-      expect(messenger['emitterCallbacks'][name1]![0]).toEqual(fn2);
-    });
-
-    it('can remove all listeners', () => {
-      messenger.addListener(name1, fn1);
-      messenger.addListener(name1, fn2);
-      messenger.removeAllListeners(name1);
-      expect(messenger['emitterCallbacks'][name1]!.length).toBe(0);
     });
 
     it('throws an error when emitting accounts changed with no address', () => {
@@ -94,12 +68,28 @@ describe('Messenger', () => {
       expect(mockFn).toHaveBeenCalledWith([address]);
     });
 
-    it('emits arbitrary messages', () => {
-      const mockFn = jest.fn();
-      const name = 'greenlight';
-      messenger.addListener(name, mockFn);
-      messenger.emit(name);
-      expect(mockFn).toHaveBeenCalled();
+    it('emits appropriate messages after adding and removing', () => {
+      const mockFn1 = jest.fn();
+      const mockFn2 = jest.fn();
+      const mockFn3 = jest.fn();
+      const name1 = 'message1';
+      const name2 = 'message2';
+      messenger.addListener(name1, mockFn1);
+      messenger.addListener(name2, mockFn2);
+      messenger.emit(name1);
+      expect(mockFn1).toHaveBeenCalledTimes(1);
+      expect(mockFn2).not.toHaveBeenCalled();
+      messenger.addListener(name2, mockFn3);
+      messenger.emit(name2);
+      expect(mockFn2).toHaveBeenCalledTimes(1);
+      expect(mockFn3).toHaveBeenCalledTimes(1);
+      messenger.removeListener(name2, mockFn2);
+      messenger.emit(name2);
+      expect(mockFn2).toHaveBeenCalledTimes(1);
+      expect(mockFn3).toHaveBeenCalledTimes(2);
+      messenger.removeAllListeners(name2);
+      expect(mockFn2).toHaveBeenCalledTimes(1);
+      expect(mockFn3).toHaveBeenCalledTimes(2);
     });
   });
 

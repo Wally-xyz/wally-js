@@ -47,7 +47,7 @@ export default class Auth {
 
   public async login(email?: string): Promise<void> {
     if (this.isLoggingIn) {
-      return Promise.reject('Already logging in.');
+      return Promise.reject(new Error('Already logging in.'));
     }
     this.isLoggingIn = true;
 

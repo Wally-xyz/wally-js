@@ -61,16 +61,16 @@ describe('Public API', () => {
   });
 
   describe('getProvider', () => {
-    it('returns undefined and shows error when no module instance', () => {
+    it('returns null and shows error when no module instance', () => {
       const ret = api.getProvider();
       expect(console.error).toHaveBeenCalled();
-      expect(ret).toEqual(undefined);
+      expect(ret).toEqual(null);
     });
 
     it('does not show error when suppressed', () => {
       const ret = api.getProvider(true);
       expect(console.error).toHaveBeenCalledTimes(0);
-      expect(ret).toEqual(undefined);
+      expect(ret).toEqual(null);
     });
 
     it('returns the module instance when there', () => {
@@ -135,11 +135,11 @@ describe('Public API', () => {
   });
 
   describe('clearInstance', () => {
-    it('sets wally instance to undefined', () => {
+    it('sets wally instance to null', () => {
       api.init({ clientId: '1234' });
       expect(api.getProvider()).toBeDefined();
       api.clearInstance();
-      expect(api.getProvider()).toBeUndefined();
+      expect(api.getProvider()).toBeNull();
     });
   });
 });

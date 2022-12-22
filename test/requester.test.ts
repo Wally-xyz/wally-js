@@ -17,7 +17,7 @@ const mockFetchWith = (data: any) =>
 describe('Requester', () => {
   describe('logged out', () => {
     let requester: Requester;
-    let tokenSpy: any;
+    let tokenSpy: jest.SpyInstance;
 
     beforeEach(() => {
       requester = new Requester({
@@ -115,7 +115,7 @@ describe('Requester', () => {
 
   describe('wally request', () => {
     let requester: Requester;
-    let tokenSpy: any;
+    let tokenSpy: jest.SpyInstance;
     let token = 'token';
     let host = 'http://localhost:1738';
 
@@ -136,7 +136,7 @@ describe('Requester', () => {
     });
 
     it.each([[WallyMethodName.ACCOUNTS], [WallyMethodName.REQUEST_ACCOUNTS]])(
-      'correctly formats an account request and response',
+      'correctly formats an account request and response: %s',
       async (method) => {
         const address = '0x1234';
         global.fetch = mockFetchWith({ address });
@@ -159,7 +159,7 @@ describe('Requester', () => {
       [WallyMethodName.SIGN, ['0x1234', 'message']],
       [WallyMethodName.PERSONAL_SIGN, ['message', '0x1234']],
     ])(
-      'correctly formats a basic message sign request and response',
+      'correctly formats a basic message sign request and response: %s',
       async (method, params) => {
         const signature = '0x9876';
         global.fetch = mockFetchWith({ signature });
@@ -187,7 +187,7 @@ describe('Requester', () => {
       [WallyMethodName.SIGN_TYPED, ['0x1234', '{"data":"data"}']],
       [WallyMethodName.SIGN_TYPED_V4, ['0x1234', { data: 'data' }]],
     ])(
-      'correctly formats a sign typed data request and response',
+      'correctly formats a sign typed data request and response: %s',
       async (method, params) => {
         const signature = '0x9876';
         global.fetch = mockFetchWith({ signature });
@@ -223,7 +223,7 @@ describe('Requester', () => {
         { hash: 'return' },
       ],
     ])(
-      'correctly formats a transaction request and response',
+      'correctly formats a transaction request and response: %s',
       async (method, params, response) => {
         global.fetch = mockFetchWith(response);
 
@@ -259,7 +259,7 @@ describe('Requester', () => {
           },
         },
       ],
-    ])('logs an error and rejects when not ok', (resp) => {
+    ])('logs an error and rejects when %o', (resp) => {
       global.fetch = jest.fn(() => Promise.resolve(resp) as any);
       const consoleSpy = jest.spyOn(console, 'error');
       consoleSpy.mockImplementation(() => {});
@@ -277,10 +277,13 @@ describe('Requester', () => {
 
   describe('rpc request', () => {
     let requester: Requester;
-    let tokenSpy: any;
+    let tokenSpy: jest.SpyInstance;
+    let consoleErrSpy: jest.SpyInstance;
+    let consoleWarnSpy: jest.SpyInstance;
     let token = 'token';
     let host = 'http://localhost:1738';
     let clientId = '1234';
+
 
     beforeEach(() => {
       requester = new Requester({
@@ -291,11 +294,17 @@ describe('Requester', () => {
       });
       tokenSpy = jest.spyOn(requester['auth'], 'getToken');
       tokenSpy.mockImplementation(() => token);
+      consoleWarnSpy = jest.spyOn(console, 'warn');
+      consoleWarnSpy.mockImplementation(() => {});
+      consoleErrSpy = jest.spyOn(console, 'error');
+      consoleErrSpy.mockImplementation(() => {});
     });
 
     afterEach(() => {
       requester = undefined as any;
       tokenSpy.mockRestore();
+      consoleWarnSpy.mockRestore();
+      consoleErrSpy.mockRestore();
     });
 
     const jsonResp = 'json';
@@ -304,7 +313,7 @@ describe('Requester', () => {
       [true, jsonResp],
       [false, textResp],
     ])(
-      'correctly formats a non-wally, listed rpc request with text and json response',
+      'correctly formats a non-wally, listed rpc request when it is json? %s',
       async (isJSon, result) => {
         global.fetch = jest.fn(
           () =>
@@ -360,17 +369,15 @@ describe('Requester', () => {
           },
         },
       ],
-    ])('logs an error and rejects when not ok', (resp) => {
+    ])('logs an error and rejects when response is %o', (resp) => {
       global.fetch = jest.fn(() => Promise.resolve(resp) as any);
-      const consoleSpy = jest.spyOn(console, 'error');
-      consoleSpy.mockImplementation(() => {});
       expect.assertions(1);
       return requester.request({ method: RPCMethodName.BLOCK_NUMBER }).then(
         () => {
           expect(true).toBe(false);
         },
         () => {
-          expect(consoleSpy).toHaveBeenCalled();
+          expect(consoleErrSpy).toHaveBeenCalled();
         }
       );
     });
@@ -385,10 +392,8 @@ describe('Requester', () => {
             text: () => 'YEW',
           }) as any
       );
-      const consoleSpy = jest.spyOn(console, 'warn');
-      consoleSpy.mockImplementation(() => {});
       await requester.request({ method: 'eth_idksomethingwild' as any });
-      expect(consoleSpy).toHaveBeenCalledTimes(1);
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
