@@ -226,14 +226,16 @@ class Requester {
                 if (!resp.ok || resp.status >= 300) {
                     console.error(`Wally server returned a non-successful response when handling method: ${method}`);
                 }
-                const contentType = resp.headers.get('content-type');
-                if (contentType && contentType.indexOf('application/json') !== -1) {
-                    const json = yield resp.json();
-                    return json;
-                }
                 else {
-                    const text = yield resp.text();
-                    return text;
+                    const contentType = resp.headers.get('content-type');
+                    if (contentType && contentType.indexOf('application/json') !== -1) {
+                        const json = yield resp.json();
+                        return json;
+                    }
+                    else {
+                        const text = yield resp.text();
+                        return text;
+                    }
                 }
             }
             catch (err) {

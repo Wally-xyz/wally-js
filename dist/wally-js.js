@@ -19,14 +19,6 @@ const auth_1 = __importDefault(require("./auth"));
 const requester_1 = __importDefault(require("./requester"));
 class WallyJS {
     constructor({ authToken, clientId, disableRedirectClose, redirectURL, sharedWorkerUrl, verbose, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }) {
-        this.finishLogin = (address) => {
-            if (!this.auth.isLoggingIn) {
-                return;
-            }
-            this.auth.isLoggingIn = false;
-            this.messenger.emit(types_1.EmitterMessage.ACCOUNTS_CHANGED, address);
-            this.messenger.emit(types_1.EmitterMessage.CONNECTED);
-        };
         const host = (_isDevelopment && _devUrl) || constants_1.APP_ROOT;
         this.messenger = new messenger_1.default({
             sharedWorkerUrl,
@@ -53,6 +45,14 @@ class WallyJS {
     get selectedAddress() {
         return this.auth.selectedAddress;
     }
+    finishLogin(address) {
+        if (!this.auth.isLoggingIn) {
+            return;
+        }
+        this.auth.isLoggingIn = false;
+        this.messenger.emit(types_1.EmitterMessage.ACCOUNTS_CHANGED, address);
+        this.messenger.emit(types_1.EmitterMessage.CONNECTED);
+    }
     on(name, cb) {
         this.messenger.addListener(name, cb);
     }
@@ -76,9 +76,6 @@ class WallyJS {
     isLoggedIn() {
         return !!this.auth.getToken();
     }
-    isConnected() {
-        return this.isLoggedIn();
-    }
     handleRedirect() {
         return __awaiter(this, void 0, void 0, function* () {
             return this.auth.handleRedirect();
@@ -88,6 +85,12 @@ class WallyJS {
         return __awaiter(this, void 0, void 0, function* () {
             return this.requester.request(req);
         });
+    }
+    /**
+     * @deprecated use isLoggedIn()
+     */
+    isConnected() {
+        return this.isLoggedIn();
     }
     /**
      * @deprecated use on()
@@ -100,7 +103,7 @@ class WallyJS {
      */
     sendAsync(req) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.requester.request(req);
+            return this.request(req);
         });
     }
     /**
@@ -108,7 +111,7 @@ class WallyJS {
      */
     enable() {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.requester.request({ method: 'eth_requestAccounts' });
+            return this.request({ method: 'eth_requestAccounts' });
         });
     }
 }

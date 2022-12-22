@@ -5,7 +5,7 @@ declare class WallyJS {
     private requester;
     constructor({ authToken, clientId, disableRedirectClose, redirectURL, sharedWorkerUrl, verbose, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }: WallyOptions);
     get selectedAddress(): string;
-    finishLogin: (address: string) => void;
+    finishLogin(address: string): void;
     on(name: string, cb: (a?: any) => void): void;
     removeListener(name: string, fn: any): void;
     removeAllListeners(name: string): void;
@@ -13,9 +13,12 @@ declare class WallyJS {
     logout(): void;
     isRedirected(): boolean;
     isLoggedIn(): boolean;
-    isConnected(): boolean;
     handleRedirect(): Promise<void>;
     request<T extends MethodNameType>(req: RequestObj<T>): Promise<MethodResponse<T> | null>;
+    /**
+     * @deprecated use isLoggedIn()
+     */
+    isConnected(): boolean;
     /**
      * @deprecated use on()
      */

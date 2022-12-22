@@ -51,7 +51,7 @@ exports.getProvider = getProvider;
  */
 const login = (email) => __awaiter(void 0, void 0, void 0, function* () {
     if (!checkInjected() || (wally && wally.isLoggedIn())) {
-        return Promise.reject();
+        return Promise.reject(new Error('No wally instance or already logged in'));
     }
     return wally.login(email);
 });

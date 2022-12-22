@@ -60,14 +60,14 @@ class WallyJS {
     return this.auth.selectedAddress;
   }
 
-  public finishLogin = (address: string): void => {
+  public finishLogin(address: string): void {
     if (!this.auth.isLoggingIn) {
       return;
     }
     this.auth.isLoggingIn = false;
     this.messenger.emit(EmitterMessage.ACCOUNTS_CHANGED, address);
     this.messenger.emit(EmitterMessage.CONNECTED);
-  };
+  }
 
   public on(name: string, cb: (a?: any) => void): void {
     this.messenger.addListener(name, cb);
@@ -97,10 +97,6 @@ class WallyJS {
     return !!this.auth.getToken();
   }
 
-  public isConnected(): boolean {
-    return this.isLoggedIn();
-  }
-
   public async handleRedirect(): Promise<void> {
     return this.auth.handleRedirect();
   }
@@ -109,6 +105,13 @@ class WallyJS {
     req: RequestObj<T>
   ): Promise<MethodResponse<T> | null> {
     return this.requester.request(req);
+  }
+
+  /**
+   * @deprecated use isLoggedIn()
+   */
+  public isConnected(): boolean {
+    return this.isLoggedIn();
   }
 
   /**
@@ -122,14 +125,14 @@ class WallyJS {
    * @deprecated - use request()
    */
   public async sendAsync(req: any) {
-    return this.requester.request(req);
+    return this.request(req);
   }
 
   /**
    * @deprecated - use request({ method: 'eth_requestAccounts' }) directly
    */
   public async enable() {
-    return this.requester.request({ method: 'eth_requestAccounts' });
+    return this.request({ method: 'eth_requestAccounts' });
   }
 }
 

@@ -54,14 +54,14 @@ class Auth {
                     // TODO: This needs to use the emitter. Will fix after restructuring/splitting up.
                     if (!this.getToken()) {
                         logFailure();
-                        reject();
+                        reject(new Error('Token not found'));
                         return;
                     }
                     resolve();
                 });
                 this.messenger.onWorkerMessage(types_1.WorkerMessage.LOGIN_FAILURE, () => {
                     logFailure();
-                    reject();
+                    reject(new Error('Could not log in, please try again'));
                 });
             });
         });
@@ -79,9 +79,7 @@ class Auth {
             const queryParams = new URLSearchParams(window.location.search);
             if (storedState && storedState !== queryParams.get('state')) {
                 this.deleteState();
-                if (this.isDevelopment) {
-                    console.error('Invalid Wally state');
-                }
+                return Promise.reject(new Error('Invalid wally state'));
             }
             this.deleteState();
             const authCode = queryParams.get('authorization_code');
@@ -140,7 +138,7 @@ class Auth {
             chars.push(String.fromCharCode('A'.charCodeAt(0) + i));
         }
         for (let i = 0; i < 10; i++) {
-            chars.push('0'.charCodeAt(0) + i);
+            chars.push(String.fromCharCode('0'.charCodeAt(0) + i));
         }
         const authCode = [];
         for (let charCount = 0; charCount < length; charCount++) {
