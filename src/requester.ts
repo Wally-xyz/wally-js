@@ -134,7 +134,10 @@ export default class Requester {
         });
       } else {
         const listener = () => {
-          this.messenger.removeListener(EmitterMessage.ACCOUNTS_CHANGED, listener);
+          this.messenger.removeListener(
+            EmitterMessage.ACCOUNTS_CHANGED,
+            listener
+          );
           resolve(this.request(req));
         };
         this.messenger.addListener(EmitterMessage.ACCOUNTS_CHANGED, listener);
@@ -285,15 +288,15 @@ export default class Requester {
         console.error(
           `Wally server returned a non-successful response when handling method: ${method}`
         );
-      }
-
-      const contentType = resp.headers.get('content-type');
-      if (contentType && contentType.indexOf('application/json') !== -1) {
-        const json = await resp.json();
-        return json;
       } else {
-        const text = await resp.text();
-        return text as RPCResponse<T>;
+        const contentType = resp.headers.get('content-type');
+        if (contentType && contentType.indexOf('application/json') !== -1) {
+          const json = await resp.json();
+          return json;
+        } else {
+          const text = await resp.text();
+          return text as RPCResponse<T>;
+        }
       }
     } catch (err) {
       console.error(

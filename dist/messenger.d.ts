@@ -18,7 +18,7 @@ export default class Messenger {
      * only used when handling accountsChanged messages.
      */
     emit(message: string, address?: string): void;
-    connectToSharedWorker(): void;
+    private connectToSharedWorker;
     handleWorkerMessage(message: WorkerMessage): void;
     onWorkerMessage(message: WorkerMessage, fn: () => void): void;
     sendWorkerMessage(message: WorkerMessage): void;

@@ -47,7 +47,7 @@ export default class Auth {
 
   public async login(email?: string): Promise<void> {
     if (this.isLoggingIn) {
-      return Promise.reject('Already logging in.');
+      return Promise.reject(new Error('Already logging in.'));
     }
     this.isLoggingIn = true;
 
@@ -87,14 +87,14 @@ export default class Auth {
         // TODO: This needs to use the emitter. Will fix after restructuring/splitting up.
         if (!this.getToken()) {
           logFailure();
-          reject();
+          reject(new Error('Token not found'));
           return;
         }
         resolve();
       });
       this.messenger.onWorkerMessage(WorkerMessage.LOGIN_FAILURE, () => {
         logFailure();
-        reject();
+        reject(new Error('Could not log in, please try again'));
       });
     });
   }
@@ -113,9 +113,7 @@ export default class Auth {
     const queryParams = new URLSearchParams(window.location.search);
     if (storedState && storedState !== queryParams.get('state')) {
       this.deleteState();
-      if (this.isDevelopment) {
-        console.error('Invalid Wally state');
-      }
+      return Promise.reject(new Error('Invalid wally state'));
     }
     this.deleteState();
     const authCode = queryParams.get('authorization_code');
@@ -183,7 +181,7 @@ export default class Auth {
       chars.push(String.fromCharCode('A'.charCodeAt(0) + i));
     }
     for (let i = 0; i < 10; i++) {
-      chars.push('0'.charCodeAt(0) + i);
+      chars.push(String.fromCharCode('0'.charCodeAt(0) + i));
     }
 
     const authCode = [];

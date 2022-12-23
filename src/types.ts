@@ -53,9 +53,9 @@ interface _AuthOptions {
   /**
    * If you'd like to use a more dynamic redirect. Only possible when the
    * redirectURL in your dashboard settings is set as a regex.
-   * TODO: Rename redirectUrl to match
+   * TODO: !!!!CASING!!!! Rename redirectUrl to match
    */
-  redirectURL?: string;
+  redirectURL?: string; // casing!
   /**
    * Required when using devUrl.
    * TODO: Make this better.

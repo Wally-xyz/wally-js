@@ -1,8 +1,8 @@
 import { WallyOptions } from './types';
 
-import WallyConnector from './wally-js';
+import WallyJS from './wally-js';
 
-let wally: WallyConnector | undefined = undefined;
+let wally: WallyJS | null = null;
 
 const checkInjected = (supress?: boolean) => {
   if (!wally) {
@@ -21,7 +21,7 @@ export const init = (options: WallyOptions): void => {
     console.error('Ensure init() is called on the client only.');
     return;
   }
-  wally = wally || new WallyConnector(options);
+  wally = wally || new WallyJS(options);
 
   if (wally.isRedirected()) {
     wally.handleRedirect();
@@ -30,9 +30,9 @@ export const init = (options: WallyOptions): void => {
   return;
 };
 
-export const getProvider = (supress?: boolean): WallyConnector | undefined => {
+export const getProvider = (supress?: boolean): WallyJS | null => {
   if (!checkInjected(supress)) {
-    return undefined;
+    return null;
   }
 
   return wally;
@@ -46,7 +46,7 @@ export const getProvider = (supress?: boolean): WallyConnector | undefined => {
  */
 export const login = async (email?: string) => {
   if (!checkInjected() || (wally && wally.isLoggedIn())) {
-    return Promise.reject();
+    return Promise.reject(new Error('No wally instance or already logged in'));
   }
 
   return wally!.login(email);
@@ -62,8 +62,8 @@ export const finishLogin = (address: string): void => {
 
 export const logout = () => {
   wally?.logout();
-}
+};
 
 export const clearInstance = () => {
-  wally = undefined;
-}
+  wally = null;
+};

@@ -23,7 +23,7 @@ export default class Messenger {
 
   public removeListener(name: string, fn: any): void {
     const idx = this.emitterCallbacks[name]?.indexOf(fn);
-    if (idx && idx > -1) {
+    if (idx !== undefined && idx > -1) {
       this.emitterCallbacks[name]?.splice(idx, 1);
     }
   }
@@ -47,7 +47,6 @@ export default class Messenger {
       throw new Error(
         'address not provided for emmitting `accountsChanged` message'
       );
-      return;
     }
 
     this.emitterCallbacks[message]?.forEach((cb) => {
@@ -55,7 +54,7 @@ export default class Messenger {
     });
   }
 
-  public connectToSharedWorker(): void {
+  private connectToSharedWorker(): void {
     if (!this.worker) {
       console.error(
         'SharedWorker not available, falling back to less-than-ideal experience.'

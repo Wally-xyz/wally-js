@@ -1,7 +1,7 @@
 import { WallyOptions } from './types';
-import WallyConnector from './wally-js';
+import WallyJS from './wally-js';
 export declare const init: (options: WallyOptions) => void;
-export declare const getProvider: (supress?: boolean) => WallyConnector | undefined;
+export declare const getProvider: (supress?: boolean) => WallyJS | undefined;
 /**
  * Must be used if `disableLoginOnRequest` is true.
  * Can optionally pass in an email to sign up. [wip]

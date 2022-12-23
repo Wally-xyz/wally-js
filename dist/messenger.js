@@ -20,7 +20,7 @@ class Messenger {
     removeListener(name, fn) {
         var _a, _b;
         const idx = (_a = this.emitterCallbacks[name]) === null || _a === void 0 ? void 0 : _a.indexOf(fn);
-        if (idx && idx > -1) {
+        if (idx !== undefined && idx > -1) {
             (_b = this.emitterCallbacks[name]) === null || _b === void 0 ? void 0 : _b.splice(idx, 1);
         }
     }
@@ -41,7 +41,6 @@ class Messenger {
         var _a;
         if (message === types_1.EmitterMessage.ACCOUNTS_CHANGED && !address) {
             throw new Error('address not provided for emmitting `accountsChanged` message');
-            return;
         }
         (_a = this.emitterCallbacks[message]) === null || _a === void 0 ? void 0 : _a.forEach((cb) => {
             cb(message === types_1.EmitterMessage.ACCOUNTS_CHANGED ? [address] : undefined);
