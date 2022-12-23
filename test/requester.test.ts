@@ -265,9 +265,7 @@ describe('Requester', () => {
       consoleSpy.mockImplementation(() => {});
       expect.assertions(1);
       return requester.request({ method: 'eth_accounts' }).then(
-        () => {
-          expect(true).toBe(false);
-        },
+        () => {},
         () => {
           expect(consoleSpy).toHaveBeenCalled();
         }
@@ -283,7 +281,6 @@ describe('Requester', () => {
     let token = 'token';
     let host = 'http://localhost:1738';
     let clientId = '1234';
-
 
     beforeEach(() => {
       requester = new Requester({
@@ -373,9 +370,7 @@ describe('Requester', () => {
       global.fetch = jest.fn(() => Promise.resolve(resp) as any);
       expect.assertions(1);
       return requester.request({ method: RPCMethodName.BLOCK_NUMBER }).then(
-        () => {
-          expect(true).toBe(false);
-        },
+        () => {},
         () => {
           expect(consoleErrSpy).toHaveBeenCalled();
         }
