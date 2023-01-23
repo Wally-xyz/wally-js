@@ -12,3 +12,4 @@ export declare const login: (email?: string) => Promise<void>;
 export declare const finishLogin: (address: string) => void;
 export declare const logout: () => void;
 export declare const clearInstance: () => void;
+export default WallyConnector;

@@ -67,3 +67,5 @@ export const logout = () => {
 export const clearInstance = () => {
   wally = undefined;
 }
+
+export default WallyConnector;

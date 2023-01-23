@@ -71,4 +71,5 @@ const clearInstance = () => {
     wally = undefined;
 };
 exports.clearInstance = clearInstance;
+exports.default = wally_connector_1.default;
 //# sourceMappingURL=index.js.map
