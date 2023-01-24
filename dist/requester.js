@@ -23,12 +23,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("./constants");
 const types_1 = require("./types");
 class Requester {
-    constructor({ clientId, verbose, host, auth, messenger }) {
+    constructor({ clientId, verbose, host, auth, messenger, email }) {
         this.clientId = clientId;
         this.verbose = !!verbose;
         this.host = host;
         this.auth = auth;
         this.messenger = messenger;
+        this.email = email;
     }
     isWallyMethod(name) {
         return Object.values(types_1.WallyMethodName).indexOf(name) > -1;
@@ -98,7 +99,7 @@ class Requester {
     deferredRequest(req) {
         return new Promise((resolve, reject) => {
             if (!this.auth.isLoggingIn) {
-                this.auth.login().then(() => {
+                this.auth.login(this.email).then(() => {
                     resolve(this.request(req));
                 });
             }

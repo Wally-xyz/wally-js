@@ -31,7 +31,10 @@ export default class Requester {
   private messenger: Messenger;
   private auth: Auth;
 
-  constructor({ clientId, verbose, host, auth, messenger }: RequesterOptions) {
+  // User
+  private email?: string;
+
+  constructor({ clientId, verbose, host, auth, messenger, email }: RequesterOptions) {
     this.clientId = clientId;
     this.verbose = !!verbose;
 
@@ -39,6 +42,8 @@ export default class Requester {
 
     this.auth = auth;
     this.messenger = messenger;
+
+    this.email = email;
   }
 
   private isWallyMethod(name: MethodNameType): name is WallyMethodName {
@@ -129,7 +134,7 @@ export default class Requester {
   ): Promise<MethodResponse<T> | null> {
     return new Promise((resolve, reject) => {
       if (!this.auth.isLoggingIn) {
-        this.auth.login().then(() => {
+        this.auth.login(this.email).then(() => {
           resolve(this.request(req));
         });
       } else {

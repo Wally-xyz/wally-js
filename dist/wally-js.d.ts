@@ -3,7 +3,7 @@ declare class WallyJS {
     private auth;
     private messenger;
     private requester;
-    constructor({ authToken, clientId, disableRedirectClose, redirectURL, sharedWorkerUrl, verbose, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }: WallyOptions);
+    constructor({ authToken, clientId, disableRedirectClose, redirectURL, sharedWorkerUrl, verbose, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, email, }: WallyOptions);
     get selectedAddress(): string;
     finishLogin(address: string): void;
     on(name: string, cb: (a?: any) => void): void;
