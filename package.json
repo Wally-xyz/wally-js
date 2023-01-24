@@ -1,7 +1,7 @@
 {
   "name": "wally-sdk",
-  "version": "0.0.9",
-  "description": "Connector lib for wallet-api",
+  "version": "0.0.11",
+  "description": "Easy to use wallet provider to create wallets out of email addresses",
   "license": "ISC",
   "author": "Wally <contact@wally.xyz>",
   "repository": "Wally-xyz/wallet-connector",
