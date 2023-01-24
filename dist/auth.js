@@ -29,7 +29,7 @@ class Auth {
     login(email) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.isLoggingIn) {
-                return Promise.reject('Already logging in.');
+                return Promise.reject(new Error('Already logging in.'));
             }
             this.isLoggingIn = true;
             if (!this.clientId) {

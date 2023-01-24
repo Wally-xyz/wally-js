@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.clearInstance = exports.logout = exports.finishLogin = exports.login = exports.getProvider = exports.init = void 0;
 const wally_js_1 = __importDefault(require("./wally-js"));
-let wally = undefined;
+let wally = null;
 const checkInjected = (supress) => {
     if (!wally) {
         if (!supress) {
@@ -38,7 +38,7 @@ const init = (options) => {
 exports.init = init;
 const getProvider = (supress) => {
     if (!checkInjected(supress)) {
-        return undefined;
+        return null;
     }
     return wally;
 };
@@ -68,7 +68,8 @@ const logout = () => {
 };
 exports.logout = logout;
 const clearInstance = () => {
-    wally = undefined;
+    wally = null;
 };
 exports.clearInstance = clearInstance;
+exports.default = wally_js_1.default;
 //# sourceMappingURL=index.js.map

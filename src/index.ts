@@ -67,3 +67,5 @@ export const logout = () => {
 export const clearInstance = () => {
   wally = null;
 };
+
+export default WallyJS;
