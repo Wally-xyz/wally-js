@@ -28,6 +28,7 @@ class WallyJS {
     _disableSharedWorker,
     _isDevelopment,
     _onTokenFetched,
+    email,
   }: WallyOptions) {
     const host = (_isDevelopment && _devUrl) || APP_ROOT;
 
@@ -53,6 +54,7 @@ class WallyJS {
       host,
       auth: this.auth,
       messenger: this.messenger,
+      email
     });
   }
 

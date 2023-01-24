@@ -18,7 +18,7 @@ const messenger_1 = __importDefault(require("./messenger"));
 const auth_1 = __importDefault(require("./auth"));
 const requester_1 = __importDefault(require("./requester"));
 class WallyJS {
-    constructor({ authToken, clientId, disableRedirectClose, redirectURL, sharedWorkerUrl, verbose, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, }) {
+    constructor({ authToken, clientId, disableRedirectClose, redirectURL, sharedWorkerUrl, verbose, _devUrl, _disableSharedWorker, _isDevelopment, _onTokenFetched, email, }) {
         const host = (_isDevelopment && _devUrl) || constants_1.APP_ROOT;
         this.messenger = new messenger_1.default({
             sharedWorkerUrl,
@@ -40,6 +40,7 @@ class WallyJS {
             host,
             auth: this.auth,
             messenger: this.messenger,
+            email
         });
     }
     get selectedAddress() {

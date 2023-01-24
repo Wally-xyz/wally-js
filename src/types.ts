@@ -92,6 +92,7 @@ export interface RequesterOptions extends _RequesterOptions {
   host: string;
   messenger: Messenger;
   auth: Auth;
+  email?: string;
 }
 
 export interface WallyOptions
@@ -102,6 +103,10 @@ export interface WallyOptions
    * The local instance of the wally api. APP ROOT used if unset or not dev mode
    */
   _devUrl?: string;
+  /**
+   * Email address to pass in for login
+   */
+  email?: string;
 }
 
 export enum WorkerMessage {

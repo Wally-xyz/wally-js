@@ -5,7 +5,8 @@ export default class Requester {
     private host;
     private messenger;
     private auth;
-    constructor({ clientId, verbose, host, auth, messenger }: RequesterOptions);
+    private email?;
+    constructor({ clientId, verbose, host, auth, messenger, email }: RequesterOptions);
     private isWallyMethod;
     private isRPCMethod;
     /**

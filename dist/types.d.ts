@@ -77,12 +77,17 @@ export interface RequesterOptions extends _RequesterOptions {
     host: string;
     messenger: Messenger;
     auth: Auth;
+    email?: string;
 }
 export interface WallyOptions extends MessengerOptions, _AuthOptions, _RequesterOptions {
     /**
      * The local instance of the wally api. APP ROOT used if unset or not dev mode
      */
     _devUrl?: string;
+    /**
+     * Email address to pass in for login
+     */
+    email?: string;
 }
 export declare enum WorkerMessage {
     LOGIN_SUCCESS = "login-success",
