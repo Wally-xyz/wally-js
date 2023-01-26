@@ -33,7 +33,7 @@ const init = (options) => {
     if (wally.isRedirected()) {
         wally.handleRedirect();
     }
-    return;
+    return wally;
 };
 exports.init = init;
 const getProvider = (supress) => {

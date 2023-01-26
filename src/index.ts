@@ -16,7 +16,7 @@ const checkInjected = (supress?: boolean) => {
   return true;
 };
 
-export const init = (options: WallyOptions): void => {
+export const init = (options: WallyOptions): WallyJS | undefined => {
   if (typeof window === 'undefined') {
     console.error('Ensure init() is called on the client only.');
     return;
@@ -27,7 +27,7 @@ export const init = (options: WallyOptions): void => {
     wally.handleRedirect();
   }
 
-  return;
+  return wally;
 };
 
 export const getProvider = (supress?: boolean): WallyJS | null => {
