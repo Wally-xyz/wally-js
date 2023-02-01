@@ -34,6 +34,8 @@
     "*.{js,css,md,jsx,tsx}": "prettier --write"
   },
   "dependencies": {
-    "@ethersproject/providers": "^5.7.2"
+    "@ethersproject/providers": "^5.7.2",
+    "ethers": "^5.7.2",
+    "wagmi": "^0.11.2"
   }
 }
