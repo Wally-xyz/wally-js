@@ -2,14 +2,15 @@
   "compilerOptions": {
     "declaration": true,
     "inlineSources": true,
-    "lib": ["ES6", "DOM"],
+    "lib": ["ES2017", "ES7", "ES6", "DOM"],
     "module": "commonjs",
     "esModuleInterop": true,
     "outDir": "dist",
     "rootDir": "src",
     "sourceMap": true,
     "strict": true,
-    "target": "ES6"
+    "target": "ES6",
+    "moduleResolution": "node",
   },
   "include": ["./src/**/*.ts"]
 }
